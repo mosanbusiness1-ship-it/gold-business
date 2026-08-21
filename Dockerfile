@@ -2,7 +2,10 @@
 FROM maven:3.6.3-openjdk-17 AS build
 WORKDIR /app
 COPY . .
-RUN mvn clean package -DskipTests
+
+RUN mvn clean && \
+    rm -rf /root/.m2/repository/xml-apis && \
+    ./mvnw package -DskipTests
 
 # Étape 2 : Exécution avec Eclipse Temurin (Version stable officielle)
 FROM eclipse-temurin:17-jre-alpine
