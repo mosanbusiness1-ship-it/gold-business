@@ -1,16 +1,12 @@
-# Étape 1 : Compilation avec votre version exacte de Maven (3.6.3) et Java 17
-FROM maven:3.6.3-openjdk-17 AS build
+# Étape 1 : Compilation isolée
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY . .
 
-# Suppression préventive du cache corrompu de xml-apis-ext avant le build 👇
-RUN mkdir -p /root/.m2/repository/xml-apis/xml-apis-ext/1.3.04/ && \
-    rm -rf /root/.m2/repository/xml-apis/xml-apis-ext/1.3.04/*
+# Force l'utilisation d'un répertoire local temporaire pour vider le cache corrompu de Render
+RUN mvn clean package -DskipTests -Dmaven.repo.local=/app/.m2/repository
 
-# Compilation propre
-RUN mvn clean package -DskipTests
-
-# Étape 2 : Exécution avec un JRE 17 léger pour la production
+# Étape 2 : Exécution avec un JRE léger
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 
