@@ -2,8 +2,13 @@
 FROM maven:3.6.3-openjdk-17 AS build
 WORKDIR /app
 COPY . .
-# AJOUT DE L'OPTION -U ICI 👇
-RUN mvn clean package -U -DskipTests
+
+# Suppression préventive du cache corrompu de xml-apis-ext avant le build 👇
+RUN mkdir -p /root/.m2/repository/xml-apis/xml-apis-ext/1.3.04/ && \
+    rm -rf /root/.m2/repository/xml-apis/xml-apis-ext/1.3.04/*
+
+# Compilation propre
+RUN mvn clean package -DskipTests
 
 # Étape 2 : Exécution avec un JRE 17 léger pour la production
 FROM eclipse-temurin:17-jre
@@ -14,4 +19,3 @@ COPY --from=build /app/target/gold-business-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
-
