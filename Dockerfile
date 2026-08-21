@@ -1,17 +1,20 @@
-# Étape 1 : Compilation isolée
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+# Étape 1 : Utiliser exactement la même image Java que votre machine Ubuntu
+FROM maven:3.6.3-openjdk-17 AS build
 WORKDIR /app
 COPY . .
 
-# Force l'utilisation d'un répertoire local temporaire pour vider le cache corrompu de Render
-RUN mvn clean package -DskipTests -Dmaven.repo.local=/app/.m2/repository
+# La commande exacte qui fonctionne chez vous
+RUN mvn clean package -DskipTests
 
-# Étape 2 : Exécution avec un JRE léger
-FROM eclipse-temurin:17-jre
+# Étape 2 : Exécution avec le même environnement Java 17
+FROM openjdk:17-jdk-slim
 WORKDIR /app
 
-# Copie du fichier JAR généré
+# Récupération du fichier JAR généré
 COPY --from=build /app/target/gold-business-0.0.1-SNAPSHOT.jar app.jar
 
-EXPOSE 8080
+# Déclaration de la variable demandée par votre application
+ENV APP_KAFKA_ENABLED=false
+
+EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]
