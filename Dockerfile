@@ -1,22 +1,30 @@
-# Étape 1 : Compilation (Inchangée car elle fonctionne)
-FROM maven:3.6.3-openjdk-17 AS build
+# syntax=docker/dockerfile:1
+
+FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /app
+
+# Build arg pour invalider le cache sur Render quand nécessaire.
+ARG CACHE_BUST=1
+
+# Copie uniquement le pom pour optimiser les couches et éviter les builds stales.
+COPY pom.xml ./
+RUN rm -rf /root/.m2/repository/xml-apis /root/.m2/repository/xml-apis-ext || true
+RUN mvn -B -q dependency:go-offline
+
+# Copie du code source et build du JAR
 COPY . .
+RUN rm -rf /root/.m2/repository/xml-apis /root/.m2/repository/xml-apis-ext || true && \
+    echo "CACHE_BUST=${CACHE_BUST}" && mvn -B clean package -DskipTests
 
-RUN mvn clean && \
-    rm -rf /root/.m2/repository/xml-apis && \
-    ./mvnw package -DskipTests
-
-# Étape 2 : Exécution avec Eclipse Temurin (Version stable officielle)
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
-# Récupération du fichier JAR généré
-COPY --from=build /app/target/gold-business-0.0.1-SNAPSHOT.jar app.jar
+# JAR généré par Maven
+COPY --from=build /app/target/gold-business-0.0.1-SNAPSHOT.jar /app/app.jar
 
-# Déclaration de la variable d'environnement
-ENV APP_KAFKA_ENABLED=true
-
+ENV APP_KAFKA_ENABLED=false
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# Render injecte la variable PORT; on l'utilise pour ne pas écouter sur un port figé.
+ENTRYPOINT ["/bin/sh", "-c", "exec java -jar /app/app.jar --server.port=${PORT:-8080}"]
 
