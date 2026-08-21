@@ -1,0 +1,17 @@
+filebeat.inputs:
+  - type: filestream
+    id: springboot-logs
+    enabled: true
+    paths:
+      - /logs/springboot.log
+    fields:
+      app: gold-business
+    fields_under_root: true
+
+output.elasticsearch:
+  hosts: ["localhost:9200"]
+  protocol: "http"
+
+
+
+

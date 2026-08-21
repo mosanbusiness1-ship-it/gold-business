@@ -1,0 +1,15 @@
+{
+  "properties": {
+    "service_provider": { "type": "keyword" },
+    "location": { "type": "keyword" },
+    "duration": { "type": "long" },
+    "online_available": { "type": "boolean" },
+    "available_after": { "type": "date", "format": "date_time" },
+    "available_slots": { "type": "date", "format": "date_time" },
+    "service_area_radius_km": { "type": "double" },
+    "cancellation_policy": { "type": "keyword" },
+    "languages_spoken": { "type": "keyword" },
+    "provider_rating": { "type": "double" },
+    "all_text": { "type": "text", "analyzer": "standard" }
+  }
+}

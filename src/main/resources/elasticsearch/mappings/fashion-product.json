@@ -1,0 +1,16 @@
+{
+  "properties": {
+    "brand": { "type": "keyword" },
+    "color": { "type": "keyword" },
+    "material": { "type": "keyword" },
+    "target_gender": { "type": "keyword" },
+    "size": { "type": "keyword" },
+    "size_system": { "type": "keyword" },
+    "fashion_type": { "type": "keyword" },
+    "condition": { "type": "keyword" },
+    "sustainable_certifications": { "type": "keyword" },
+    "size_fit": { "type": "keyword" },
+    "material_origin": { "type": "keyword" },
+    "all_text": { "type": "text", "analyzer": "standard" }
+  }
+}

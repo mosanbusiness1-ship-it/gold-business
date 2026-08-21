@@ -1,0 +1,17 @@
+{
+  "properties": {
+    "category": { "type": "keyword" },
+    "expiry_date": { "type": "date", "format": "date" },
+    "nutritional_info": { "type": "text" },
+    "organic": { "type": "boolean" },
+    "gluten_free": { "type": "boolean" },
+    "weight": { "type": "double" },
+    "origin_country": { "type": "keyword" },
+    "organic_cert_id": { "type": "keyword" },
+    "allergen_tags": { "type": "keyword" },
+    "packaging_type": { "type": "keyword" },
+    "shelf_life_days": { "type": "integer" },
+    "storage_temperature": { "type": "keyword" },
+    "all_text": { "type": "text", "analyzer": "standard" }
+  }
+}

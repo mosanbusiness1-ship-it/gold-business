@@ -1,0 +1,142 @@
+# Données d'exemple pour création d'enchères (auctions)
+
+Ce fichier fournit :
+- le payload `POST /public/auctions` pour créer une enchère
+- la réponse attendue (`CreateAuctionDTO`)
+
+Important : `userId` est la chaîne "1" dans tous les exemples.
+Les horodatages utilisent le format UTC/Z (`yyyy-MM-dd'T'HH:mm:ss.SSSZ`).
+
+---
+
+1) CREATE AUCTION AVEC UN NEED ELECTRONIC
+
+Request (payload):
+{
+  "startedAt": "2026-08-01T09:00:00.000Z",
+  "endAt": "2026-08-10T18:00:00.000Z",
+  "isActived": true,
+  "userId": "1",
+  "need": {
+    "name": "Recherche smartphone reconditionné",
+    "max_price": 200000,
+    "quantity": 1,
+    "type": "ELECTRONIC",
+    "description": "Smartphone 4G minimum, bon état",
+    "user_id": "1",
+    "photo_urls": [],
+    "mandatory_fields": ["brand", "model"],
+    "electronic_type": "PHONE",
+    "brand": "Apple",
+    "model": "iPhone 11",
+    "specifications": "{ \"min_ram\": \"4GB\" }",
+    "warranty_period": "6"
+  }
+}
+
+Expected response (200 OK):
+{
+  "id": 1,
+  "ownerId": 1,
+  "startedAt": "2026-08-01T09:00:00.000Z",
+  "endAt": "2026-08-10T18:00:00.000Z",
+  "isActived": true,
+  "needName": "Recherche smartphone reconditionné",
+  "maxPrice": 200000,
+  "currency": "XAF",
+  "needQuantity": 1,
+  "needDescription": "Smartphone 4G minimum, bon état"
+}
+
+---
+
+2) CREATE AUCTION AVEC UN NEED VEHICLE
+
+Request (payload):
+{
+  "startedAt": "2026-08-05T08:00:00.000Z",
+  "endAt": "2026-08-12T20:00:00.000Z",
+  "isActived": true,
+  "userId": "1",
+  "need": {
+    "name": "Recherche SUV familial",
+    "max_price": 1200000,
+    "quantity": 1,
+    "type": "VEHICLE",
+    "description": "SUV confortable, 7 places",
+    "user_id": "1",
+    "photo_urls": [],
+    "mandatory_fields": ["vehicle_type", "make"],
+    "vehicle_type": "SUV",
+    "make": "Renault",
+    "model": "Koleos",
+    "manufacturing_year": 2019,
+    "mileage": 80000.0,
+    "fuel_type": "Diesel",
+    "color": "Gris"
+  }
+}
+
+Expected response (200 OK):
+{
+  "id": 2,
+  "ownerId": 1,
+  "startedAt": "2026-08-05T08:00:00.000Z",
+  "endAt": "2026-08-12T20:00:00.000Z",
+  "isActived": true,
+  "needName": "Recherche SUV familial",
+  "maxPrice": 1200000,
+  "currency": "XAF",
+  "needQuantity": 1,
+  "needDescription": "SUV confortable, 7 places"
+}
+
+---
+
+3) CREATE AUCTION AVEC UN NEED SERVICE
+
+Request (payload):
+{
+  "startedAt": "2026-08-10T10:00:00.000Z",
+  "endAt": "2026-08-15T19:00:00.000Z",
+  "isActived": true,
+  "userId": "1",
+  "need": {
+    "name": "Recherche coach sportif",
+    "max_price": 6000,
+    "quantity": 5,
+    "type": "SERVICE",
+    "description": "Coach pour séances en groupe",
+    "user_id": "1",
+    "photo_urls": [],
+    "auto_purchase": false,
+    "mandatory_fields": ["service_provider"],
+    "available_slots": ["2026-08-11T09:00:00.000Z"],
+    "service_provider": "CoachPro",
+    "location": "Paris",
+    "duration": 3600,
+    "online_available": false,
+    "available_after": "2026-08-11T09:00:00.000Z"
+  }
+}
+
+Expected response (200 OK):
+{
+  "id": 3,
+  "ownerId": 1,
+  "startedAt": "2026-08-10T10:00:00.000Z",
+  "endAt": "2026-08-15T19:00:00.000Z",
+  "isActived": true,
+  "needName": "Recherche coach sportif",
+  "maxPrice": 6000,
+  "currency": "USD",
+  "needQuantity": 5,
+  "needDescription": "Coach pour séances en groupe"
+}
+
+---
+
+Remarques :
+- Le contrôleur `AuctionController` utilise `AuctionRequest` pour la création.
+- La réponse retourne un `CreateAuctionDTO` avec les informations d’enchère et du need associé.
+- Les valeurs `id` et `ownerId` sont des exemples ; dans une vraie API, elles seront générées par la base de données.

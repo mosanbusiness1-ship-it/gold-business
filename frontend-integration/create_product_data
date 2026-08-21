@@ -1,0 +1,350 @@
+# Données d'exemple pour création de produits
+
+Ce fichier fournit, pour chaque `ProductType`, :
+- le payload `POST /public/products` (création)
+- la réponse attendue (schéma `CreateProductResponseDto`)
+
+Important : `owner_id` est la chaîne "1" dans tous les exemples (conformément à ta demande).
+Les horodatages utilisent le format UTC/Z accepté par l'application (`yyyy-MM-dd'T'HH:mm:ss.SSSZ`).
+
+---
+
+1) PRODUIT ELECTRONIC
+
+Request (payload):
+{
+  "name": "iPhone 11 Pro",
+  "description": "iphone 11 pro desc",
+  "price": 150000,
+  "quantity": 10,
+  "currency": "EURO",
+  "type": "ELECTRONIC",
+  "enabled": true,
+  "version": 1,
+  "owner_id": "1",
+  "photo_urls": ["https://example.com/photos/iphone11.jpg"],
+  "created_at": "2026-07-20T19:06:08.934Z",
+  "updated_at": "2026-07-20T19:06:08.934Z",
+  "is_platform_owner": false,
+  "brand": "Apple",
+  "model": "iPhone 11 Pro",
+  "specifications": "{ \"ram\": \"4GB\", \"storage\": \"64GB\" }",
+  "electronic_type": "PHONE",
+  "warranty_period": "12"
+}
+
+Expected response (201 Created):
+{
+  "savedProduct": {
+    "owner_id": "1",
+    "name": "iPhone 11 Pro",
+    "description": "iphone 11 pro desc",
+    "price": 150000,
+    "quantity": 10,
+    "currency": "EURO",
+    "type": "ELECTRONIC",
+    "photo_urls": ["https://example.com/photos/iphone11.jpg"],
+    "created_at": "2026-07-20T19:06:08.934Z",
+    "updated_at": "2026-07-20T19:06:08.934Z",
+    "enabled": true,
+    "is_platform_owner": false,
+    "version": 1,
+    "brand": "Apple",
+    "model": "iPhone 11 Pro",
+    "specifications": "{ \"ram\": \"4GB\", \"storage\": \"64GB\" }",
+    "electronic_type": "PHONE",
+    "warranty_period": "12"
+  },
+  "strictlyMatchingNeeds": [],
+  "similarNeeds": []
+}
+
+---
+
+2) PRODUIT VEHICLE
+
+Request (payload):
+{
+  "name": "Toyota Corolla 2018",
+  "description": "Voiture très propre",
+  "price": 1200000,
+  "quantity": 1,
+  "currency": "XAF",
+  "type": "VEHICLE",
+  "enabled": true,
+  "version": 1,
+  "owner_id": "1",
+  "photo_urls": ["https://example.com/photos/corolla.jpg"],
+  "created_at": "2026-07-20T19:06:08.934Z",
+  "updated_at": "2026-07-20T19:06:08.934Z",
+  "is_platform_owner": false,
+  "vehicle_type": "CAR",
+  "make": "Toyota",
+  "model": "Corolla",
+  "manufacturing_year": 2018,
+  "mileage": 45000.0,
+  "fuel_type": "Essence",
+  "color": "Blanc",
+  "vin_number": "JTDBU4EE9AJ123456"
+}
+
+Expected response (201 Created):
+{
+  "savedProduct": {
+    "owner_id": "1",
+    "name": "Toyota Corolla 2018",
+    "description": "Voiture très propre",
+    "price": 1200000,
+    "quantity": 1,
+    "currency": "XAF",
+    "type": "VEHICLE",
+    "photo_urls": ["https://example.com/photos/corolla.jpg"],
+    "created_at": "2026-07-20T19:06:08.934Z",
+    "updated_at": "2026-07-20T19:06:08.934Z",
+    "enabled": true,
+    "is_platform_owner": false,
+    "version": 1,
+    "vehicle_type": "CAR",
+    "make": "Toyota",
+    "model": "Corolla",
+    "manufacturing_year": 2018,
+    "mileage": 45000.0,
+    "fuel_type": "Essence",
+    "color": "Blanc",
+    "vin_number": "JTDBU4EE9AJ123456"
+  },
+  "strictlyMatchingNeeds": [],
+  "similarNeeds": []
+}
+
+---
+
+3) PRODUIT SERVICE
+
+Request (payload):
+{
+  "name": "Séance de coaching 1h",
+  "description": "Coaching individuel",
+  "price": 5000,
+  "quantity": 10,
+  "currency": "USD",
+  "type": "SERVICE",
+  "enabled": true,
+  "version": 1,
+  "owner_id": "1",
+  "photo_urls": [],
+  "created_at": "2026-07-20T19:06:08.934Z",
+  "updated_at": "2026-07-20T19:06:08.934Z",
+  "is_platform_owner": false,
+  "available_slots": ["2026-07-25T09:00:00.000Z", "2026-07-25T10:00:00.000Z"],
+  "service_provider": "CoachPro",
+  "location": "Paris",
+  "duration": 3600,
+  "online_available": true,
+  "available_after": "2026-07-21T09:00:00.000Z"
+}
+
+Expected response (201 Created):
+{
+  "savedProduct": {
+    "owner_id": "1",
+    "name": "Séance de coaching 1h",
+    "description": "Coaching individuel",
+    "price": 5000,
+    "quantity": 10,
+    "currency": "USD",
+    "type": "SERVICE",
+    "photo_urls": [],
+    "created_at": "2026-07-20T19:06:08.934Z",
+    "updated_at": "2026-07-20T19:06:08.934Z",
+    "enabled": true,
+    "is_platform_owner": false,
+    "version": 1,
+    "available_slots": ["2026-07-25T09:00:00.000Z", "2026-07-25T10:00:00.000Z"],
+    "service_provider": "CoachPro",
+    "location": "Paris",
+    "duration": 3600,
+    "online_available": true,
+    "available_after": "2026-07-21T09:00:00.000Z"
+  },
+  "strictlyMatchingNeeds": [],
+  "similarNeeds": []
+}
+
+---
+
+4) PRODUIT FASHION
+
+Request (payload):
+{
+  "name": "T-shirt coton",
+  "description": "T-shirt confortable",
+  "price": 2000,
+  "quantity": 50,
+  "currency": "EURO",
+  "type": "FASHION",
+  "enabled": true,
+  "version": 1,
+  "owner_id": "1",
+  "photo_urls": ["https://example.com/photos/tshirt.jpg"],
+  "created_at": "2026-07-20T19:06:08.934Z",
+  "updated_at": "2026-07-20T19:06:08.934Z",
+  "is_platform_owner": false,
+  "fashion_type": "CLOTHING",
+  "size": "M",
+  "size_system": "EU",
+  "color": "Noir",
+  "material": "Coton",
+  "brand": "MarqueX",
+  "target_gender": "UNISEX"
+}
+
+Expected response (201 Created):
+{
+  "savedProduct": {
+    "owner_id": "1",
+    "name": "T-shirt coton",
+    "description": "T-shirt confortable",
+    "price": 2000,
+    "quantity": 50,
+    "currency": "EURO",
+    "type": "FASHION",
+    "photo_urls": ["https://example.com/photos/tshirt.jpg"],
+    "created_at": "2026-07-20T19:06:08.934Z",
+    "updated_at": "2026-07-20T19:06:08.934Z",
+    "enabled": true,
+    "is_platform_owner": false,
+    "version": 1,
+    "fashion_type": "CLOTHING",
+    "size": "M",
+    "size_system": "EU",
+    "color": "Noir",
+    "material": "Coton",
+    "brand": "MarqueX",
+    "target_gender": "UNISEX"
+  },
+  "strictlyMatchingNeeds": [],
+  "similarNeeds": []
+}
+
+---
+
+5) PRODUIT FOOD
+
+Request (payload):
+{
+  "name": "Yaourt nature",
+  "description": "Yaourt bio 125g",
+  "price": 300,
+  "quantity": 200,
+  "currency": "XAF",
+  "type": "FOOD",
+  "enabled": true,
+  "version": 1,
+  "owner_id": "1",
+  "photo_urls": [],
+  "created_at": "2026-07-20T19:06:08.934Z",
+  "updated_at": "2026-07-20T19:06:08.934Z",
+  "is_platform_owner": false,
+  "category": "DAIRY",
+  "expiry_date": "2026-08-01",
+  "nutritional_info": "Calories: 120",
+  "organic": true,
+  "gluten_free": false,
+  "weight": 0.125
+}
+
+Expected response (201 Created):
+{
+  "savedProduct": {
+    "owner_id": "1",
+    "name": "Yaourt nature",
+    "description": "Yaourt bio 125g",
+    "price": 300,
+    "quantity": 200,
+    "currency": "XAF",
+    "type": "FOOD",
+    "photo_urls": [],
+    "created_at": "2026-07-20T19:06:08.934Z",
+    "updated_at": "2026-07-20T19:06:08.934Z",
+    "enabled": true,
+    "is_platform_owner": false,
+    "version": 1,
+    "category": "DAIRY",
+    "expiry_date": "2026-08-01",
+    "nutritional_info": "Calories: 120",
+    "organic": true,
+    "gluten_free": false,
+    "weight": 0.125
+  },
+  "strictlyMatchingNeeds": [],
+  "similarNeeds": []
+}
+
+---
+
+6) PRODUIT REAL ESTATE
+
+Request (payload):
+{
+  "name": "Appartement 2 pièces",
+  "description": "Appartement lumineux en centre-ville",
+  "price": 25000000,
+  "quantity": 1,
+  "currency": "USD",
+  "type": "REALESTATE",
+  "enabled": true,
+  "version": 1,
+  "owner_id": "1",
+  "photo_urls": ["https://example.com/photos/apt.jpg"],
+  "created_at": "2026-07-20T19:06:08.934Z",
+  "updated_at": "2026-07-20T19:06:08.934Z",
+  "is_platform_owner": false,
+  "address": "10 rue Exemple",
+  "city": "Lyon",
+  "surface_area": 55.0,
+  "room_count": 2,
+  "bathroom_count": 1,
+  "real_estate_type": "APARTMENT",
+  "is_for_rent": false,
+  "is_for_sale": true,
+  "construction_year": 2005,
+  "energy_class": "C"
+}
+
+Expected response (201 Created):
+{
+  "savedProduct": {
+    "owner_id": "1",
+    "name": "Appartement 2 pièces",
+    "description": "Appartement lumineux en centre-ville",
+    "price": 25000000,
+    "quantity": 1,
+    "currency": "USD",
+    "type": "REALESTATE",
+    "photo_urls": ["https://example.com/photos/apt.jpg"],
+    "created_at": "2026-07-20T19:06:08.934Z",
+    "updated_at": "2026-07-20T19:06:08.934Z",
+    "enabled": true,
+    "is_platform_owner": false,
+    "version": 1,
+    "address": "10 rue Exemple",
+    "city": "Lyon",
+    "surface_area": 55.0,
+    "room_count": 2,
+    "bathroom_count": 1,
+    "real_estate_type": "APARTMENT",
+    "is_for_rent": false,
+    "is_for_sale": true,
+    "construction_year": 2005,
+    "energy_class": "C"
+  },
+  "strictlyMatchingNeeds": [],
+  "similarNeeds": []
+}
+
+---
+
+Notes finales :
+- Les réponses ci-dessus montrent la structure attendue; selon ton implémentation, la `savedProduct` peut contenir des champs supplémentaires (ex: `id`) si le mapper les expose. 
+- Si tu veux, je peux aussi produire des fichiers JSON séparés (un fichier par type) ou des fixtures au format `curl`/`httpie` prêts à exécuter.

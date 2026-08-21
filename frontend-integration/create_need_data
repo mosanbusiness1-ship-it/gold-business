@@ -1,0 +1,290 @@
+# Données d'exemple pour création de Needs (User Needs)
+
+Ce fichier fournit, pour chaque `NeedType`, :
+- le payload `POST /public/needs` (création)
+- la réponse attendue (schéma retourné par l'API : `savedNeed` + `matchingProducts`)
+
+Important : `user_id` est la chaîne "1" dans tous les exemples.
+Les horodatages utilisent le format UTC/Z (`yyyy-MM-dd'T'HH:mm:ss.SSSZ`).
+
+---
+
+1) NEED ELECTRONIC
+
+Request (payload):
+{
+  "name": "Recherche iPhone reconditionné",
+  "max_price": 200000,
+  "quantity": 1,
+  "currency": "XAF",
+  "type": "ELECTRONIC",
+  "description": "Cherche iPhone en bon état",
+  "user_id": "1",
+  "photo_urls": [],
+  "mandatory_fields": ["brand", "model"],
+  "electronic_type": "PHONE",
+  "brand": "Apple",
+  "model": "iPhone 11",
+  "specifications": "{ \"min_ram\": \"4GB\" }",
+  "warranty_period": "6"
+}
+
+Expected response (201 Created):
+{
+  "savedNeed": {
+    "name": "Recherche iPhone reconditionné",
+    "max_price": 200000,
+    "quantity": 1,
+    "currency": "XAF",
+    "type": "ELECTRONIC",
+    "description": "Cherche iPhone en bon état",
+    "user_id": "1",
+    "photo_urls": [],
+    "mandatory_fields": ["brand", "model"],
+    "electronic_type": "PHONE",
+    "brand": "Apple",
+    "model": "iPhone 11",
+    "specifications": "{ \"min_ram\": \"4GB\" }",
+    "warranty_period": "6"
+  },
+  "matchingProducts": []
+}
+
+---
+
+2) NEED VEHICLE
+
+Request (payload):
+{
+  "name": "Voiture familiale occasion",
+  "max_price": 800000,
+  "quantity": 1,
+  "currency": "XAF",
+  "type": "VEHICLE",
+  "description": "Véhicule 5 places, faible kilométrage",
+  "user_id": "1",
+  "photo_urls": [],
+  "mandatory_fields": ["vehicle_type", "make"],
+  "vehicle_type": "CAR",
+  "make": "Toyota",
+  "model": "Auris",
+  "manufacturing_year": 2016,
+  "mileage": 70000.0,
+  "fuel_type": "Essence",
+  "color": "Gris"
+}
+
+Expected response (201 Created):
+{
+  "savedNeed": {
+    "name": "Voiture familiale occasion",
+    "max_price": 800000,
+    "quantity": 1,
+    "currency": "XAF",
+    "type": "VEHICLE",
+    "description": "Véhicule 5 places, faible kilométrage",
+    "user_id": "1",
+    "photo_urls": [],
+    "mandatory_fields": ["vehicle_type", "make"],
+    "vehicle_type": "CAR",
+    "make": "Toyota",
+    "model": "Auris",
+    "manufacturing_year": 2016,
+    "mileage": 70000.0,
+    "fuel_type": "Essence",
+    "color": "Gris"
+  },
+  "matchingProducts": []
+}
+
+---
+
+3) NEED SERVICE
+
+Request (payload):
+{
+  "name": "Recherche coach sportif",
+  "max_price": 6000,
+  "quantity": 5,
+  "currency": "USD",
+  "type": "SERVICE",
+  "description": "Coach pour séances en groupe",
+  "user_id": "1",
+  "photo_urls": [],
+  "auto_purchase": false,
+  "mandatory_fields": ["service_provider"],
+  "available_slots": ["2026-07-25T09:00:00.000Z"],
+  "service_provider": "CoachPro",
+  "location": "Paris",
+  "duration": 3600,
+  "online_available": false,
+  "available_after": "2026-07-21T09:00:00.000Z"
+}
+
+Expected response (201 Created):
+{
+  "savedNeed": {
+    "name": "Recherche coach sportif",
+    "max_price": 6000,
+    "quantity": 5,
+    "currency": "USD",
+    "type": "SERVICE",
+    "description": "Coach pour séances en groupe",
+    "user_id": "1",
+    "photo_urls": [],
+    "auto_purchase": false,
+    "mandatory_fields": ["service_provider"],
+    "available_slots": ["2026-07-25T09:00:00.000Z"],
+    "service_provider": "CoachPro",
+    "location": "Paris",
+    "duration": 3600,
+    "online_available": false,
+    "available_after": "2026-07-21T09:00:00.000Z"
+  },
+  "matchingProducts": []
+}
+
+---
+
+4) NEED FASHION
+
+Request (payload):
+{
+  "name": "T-shirt grand format",
+  "max_price": 3000,
+  "quantity": 10,
+  "type": "FASHION",
+  "description": "T-shirt coupe large",
+  "user_id": "1",
+  "photo_urls": [],
+  "mandatory_fields": ["size"],
+  "fashion_type": "CLOTHING",
+  "size": "XL",
+  "size_system": "EU",
+  "color": "Noir",
+  "material": "Coton",
+  "brand": "MarqueY",
+  "target_gender": "UNISEX"
+}
+
+Expected response (201 Created):
+{
+  "savedNeed": {
+    "name": "T-shirt grand format",
+    "max_price": 3000,
+    "quantity": 10,
+    "type": "FASHION",
+    "description": "T-shirt coupe large",
+    "user_id": "1",
+    "photo_urls": [],
+    "mandatory_fields": ["size"],
+    "fashion_type": "CLOTHING",
+    "size": "XL",
+    "size_system": "EU",
+    "color": "Noir",
+    "material": "Coton",
+    "brand": "MarqueY",
+    "target_gender": "UNISEX"
+  },
+  "matchingProducts": []
+}
+
+---
+
+5) NEED FOOD
+
+Request (payload):
+{
+  "name": "Yaourt familial",
+  "max_price": 1000,
+  "quantity": 20,
+  "type": "FOOD",
+  "description": "Yaourt nature par pack",
+  "user_id": "1",
+  "photo_urls": [],
+  "mandatory_fields": ["category"],
+  "category": "DAIRY",
+  "expiry_date": "2026-08-01",
+  "nutritional_info": "Calories: 120",
+  "organic": true,
+  "gluten_free": false,
+  "weight": 0.125
+}
+
+Expected response (201 Created):
+{
+  "savedNeed": {
+    "name": "Yaourt familial",
+    "max_price": 1000,
+    "quantity": 20,
+    "type": "FOOD",
+    "description": "Yaourt nature par pack",
+    "user_id": "1",
+    "photo_urls": [],
+    "mandatory_fields": ["category"],
+    "category": "DAIRY",
+    "expiry_date": "2026-08-01",
+    "nutritional_info": "Calories: 120",
+    "organic": true,
+    "gluten_free": false,
+    "weight": 0.125
+  },
+  "matchingProducts": []
+}
+
+---
+
+6) NEED REAL ESTATE
+
+Request (payload):
+{
+  "name": "Appartement 3 pièces",
+  "max_price": 35000000,
+  "quantity": 1,
+  "type": "REALESTATE",
+  "description": "Appartement proche transport",
+  "user_id": "1",
+  "photo_urls": [],
+  "mandatory_fields": ["city"],
+  "address": "15 avenue Exemple",
+  "city": "Paris",
+  "surface_area": 75.0,
+  "room_count": 3,
+  "bathroom_count": 2,
+  "real_estate_type": "APARTMENT",
+  "is_for_rent": false,
+  "is_for_sale": true,
+  "construction_year": 1998,
+  "energy_class": "B"
+}
+
+Expected response (201 Created):
+{
+  "savedNeed": {
+    "name": "Appartement 3 pièces",
+    "max_price": 35000000,
+    "quantity": 1,
+    "type": "REALESTATE",
+    "description": "Appartement proche transport",
+    "user_id": "1",
+    "photo_urls": [],
+    "mandatory_fields": ["city"],
+    "address": "15 avenue Exemple",
+    "city": "Paris",
+    "surface_area": 75.0,
+    "room_count": 3,
+    "bathroom_count": 2,
+    "real_estate_type": "APARTMENT",
+    "is_for_rent": false,
+    "is_for_sale": true,
+    "construction_year": 1998,
+    "energy_class": "B"
+  },
+  "matchingProducts": []
+}
+
+---
+
+Notes :
+- Les objets `savedNeed` ci-dessus représentent la forme DTO retournée par l'API. Selon le mapper, des champs additionnels (ex: `id`) peuvent être présents.
+- Si tu veux, je peux exporter chaque exemple en fichier JSON séparé ou fournir des `curl`/`httpie` prêts à l'emploi.

@@ -1,0 +1,20 @@
+{
+  "properties": {
+    "vehicle_type": { "type": "keyword" },
+    "make": { "type": "keyword" },
+    "model": { "type": "keyword" },
+    "manufacturing_year": { "type": "integer" },
+    "mileage": { "type": "double" },
+    "fuel_type": { "type": "keyword" },
+    "color": { "type": "keyword" },
+    "vin_number": { "type": "keyword" },
+    "transmission": { "type": "keyword" },
+    "trim": { "type": "keyword" },
+    "fuel_consumption_l_per_100km": { "type": "double" },
+    "doors": { "type": "integer" },
+    "vehicle_condition": { "type": "keyword" },
+    "warranty_months": { "type": "integer" },
+    "seller_rating": { "type": "double" },
+    "all_text": { "type": "text", "analyzer": "standard" }
+  }
+}

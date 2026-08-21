@@ -1,0 +1,4 @@
+@echo off
+echo Lancement de docker-compose...
+docker-compose up
+pause

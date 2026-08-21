@@ -1,0 +1,22 @@
+{
+  "properties": {
+    "address": { "type": "text", "analyzer": "standard" },
+    "city": { "type": "keyword" },
+    "surface_area": { "type": "double" },
+    "room_count": { "type": "integer" },
+    "bathroom_count": { "type": "integer" },
+    "real_estate_type": { "type": "keyword" },
+    "is_for_rent": { "type": "boolean" },
+    "is_for_sale": { "type": "boolean" },
+    "construction_year": { "type": "integer" },
+    "energy_class": { "type": "keyword" },
+    "floor": { "type": "integer" },
+    "balcony": { "type": "boolean" },
+    "furnished": { "type": "boolean" },
+    "hoa_fees": { "type": "double" },
+    "parking": { "type": "keyword" },
+    "energy_rating_numeric": { "type": "integer" },
+    "neighborhood_tags": { "type": "keyword" },
+    "all_text": { "type": "text", "analyzer": "standard" }
+  }
+}

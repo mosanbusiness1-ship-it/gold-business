@@ -1,0 +1,192 @@
+# Organisation creation and member addition examples
+
+## 1. Create organisation
+
+Test organisations doivent être soit des groupes de vente, soit des structures de prestation de service.
+
+POST /api/organisations?ownerId=1
+
+Request body (groupe de vente):
+
+{
+  "owner_id": 1,
+  "name": "Groupe de vente Gold",
+  "type": "SALES_GROUP",
+  "category": "PRIVATE",
+  "public_join": false,
+  "requires_approval": true,
+  "restricted_toAdmins_only": false
+}
+
+Expected response (201 Created):
+
+{
+  "id": 101,
+  "owner_id": 1,
+  "name": "Groupe de vente Gold",
+  "type": "SALES_GROUP",
+  "category": "PRIVATE",
+  "public_join": false,
+  "requires_approval": true,
+  "restricted_toAdmins_only": false,
+  "created_at": "2026-07-20T12:00:00",
+  "updated_at": "2026-07-20T12:00:00"
+}
+
+Request body (prestation de service):
+
+{
+  "owner_id": 1,
+  "name": "Réseau de prestation Gold",
+  "type": "DISTRIBUTION_NETWORK",
+  "category": "PUBLIC",
+  "public_join": true,
+  "requires_approval": false,
+  "restricted_toAdmins_only": false
+}
+
+Expected response (201 Created):
+
+{
+  "id": 102,
+  "owner_id": 1,
+  "name": "Réseau de prestation Gold",
+  "type": "DISTRIBUTION_NETWORK",
+  "category": "PUBLIC",
+  "public_join": true,
+  "requires_approval": false,
+  "restricted_toAdmins_only": false,
+  "created_at": "2026-07-20T12:05:00",
+  "updated_at": "2026-07-20T12:05:00"
+}
+
+> Note: The controller uses the `ownerId` query parameter to identify the organisation owner. Including `owner_id` in the body is supported by the DTO, but the request path must also include `?ownerId=1`.
+
+Swagger example (OpenAPI): assurez-vous que l'exemple de corps inclut `owner_id` et que la requête fournit `ownerId` en query. Exemple d'entrée pour Swagger UI:
+
+Request URL (example): `/api/organisations?ownerId=1`
+
+Request body (Swagger example):
+
+{
+  "owner_id": 1,
+  "name": "Groupe de vente Gold",
+  "type": "SALES_GROUP",
+  "category": "PRIVATE",
+  "public_join": false,
+  "requires_approval": true,
+  "restricted_toAdmins_only": false
+}
+
+Si votre Swagger/OpenAPI montre seulement `ownerId` en query et lève une erreur "For 'ownerId': Required field is not provided", fournissez aussi `owner_id` dans l'exemple de corps pour que la validation passe via les deux chemins.
+
+## 2. Add organisation members
+
+POST /api/orgmembers/101/members
+
+Example 1: Add user 4 as full member
+
+Request body:
+
+{
+  "userId": 4,
+  "type": "FULL_MEMBER",
+  "roles": ["ROLE_USER"]
+}
+
+Expected response (200 OK):
+
+{
+  "id": {
+    "organisationId": 101,
+    "userId": 4
+  },
+  "type": "FULL_MEMBER",
+  "status": "ACTIVE",
+  "joinedAt": "2026-07-20T12:01:00",
+  "modifiedAt": "2026-07-20T12:01:00",
+  "roles": ["ROLE_USER"]
+}
+
+Example 2: Add user 5 as admin member
+
+Request body:
+
+{
+  "userId": 5,
+  "type": "ADMIN",
+  "roles": ["ROLE_ADMIN", "ROLE_USER"]
+}
+
+Example 3: Add user 6 as read-only member
+
+Request body:
+
+{
+  "userId": 6,
+  "type": "VIEWER",
+  "roles": ["ROLE_VIEWER"]
+}
+
+Example 4: Add user 7 as reviewer member
+
+Request body:
+
+{
+  "userId": 7,
+  "type": "REVIEWER",
+  "roles": ["ROLE_REVIEWER", "ROLE_USER"]
+}
+
+## 3. Retrieve organisation members
+
+GET /api/orgmembers/101/members
+
+Expected response:
+
+[
+  {
+    "id": {
+      "organisationId": 101,
+      "userId": 4
+    },
+    "type": "FULL_MEMBER",
+    "status": "ACTIVE",
+    "joinedAt": "2026-07-20T12:01:00",
+    "modifiedAt": "2026-07-20T12:01:00",
+    "roles": ["ROLE_USER"]
+  },
+  {
+    "id": {
+      "organisationId": 101,
+      "userId": 5
+    },
+    "type": "ADMIN",
+    "status": "ACTIVE",
+    "joinedAt": "2026-07-20T12:02:00",
+    "modifiedAt": "2026-07-20T12:02:00",
+    "roles": ["ROLE_ADMIN", "ROLE_USER"]
+  },
+  {
+    "id": {
+      "organisationId": 101,
+      "userId": 6
+    },
+    "type": "VIEWER",
+    "status": "ACTIVE",
+    "joinedAt": "2026-07-20T12:03:00",
+    "modifiedAt": "2026-07-20T12:03:00",
+    "roles": ["ROLE_VIEWER"]
+  },
+  {
+    "id": {
+      "organisationId": 101,
+      "userId": 7
+    },
+    "type": "REVIEWER",
+    "status": "ACTIVE",
+    "joinedAt": "2026-07-20T12:04:00",
+    "modifiedAt": "2026-07-20T12:04:00",
+    "roles": ["ROLE_REVIEWER", "ROLE_USER"]
+  }
+]

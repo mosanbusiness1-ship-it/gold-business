@@ -1,0 +1,16 @@
+{
+  "properties": {
+    "electronic_type": { "type": "keyword" },
+    "brand": { "type": "keyword" },
+    "model": { "type": "keyword" },
+    "specifications": { "type": "text" },
+    "warranty_period": { "type": "keyword" },
+    "release_year": { "type": "integer" },
+    "battery_health_percent": { "type": "integer" },
+    "accessories_included": { "type": "keyword" },
+    "supported_networks": { "type": "keyword" },
+    "warranty_months": { "type": "integer" },
+    "seller_rating": { "type": "double" },
+    "all_text": { "type": "text", "analyzer": "standard" }
+  }
+}

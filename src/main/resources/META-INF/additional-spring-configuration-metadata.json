@@ -1,0 +1,62 @@
+{"properties": [
+  {
+    "name": "app.encryption.key",
+    "type": "java.lang.String",
+    "description": "A description for 'app.encryption.key'"
+  },
+  {
+    "name": "security.jwt.secret-key",
+    "type": "java.lang.String",
+    "description": "A description for 'security.jwt.secret-key'"
+  },
+  {
+    "name": "security.jwt.expiration-time",
+    "type": "java.lang.String",
+    "description": "A description for 'security.jwt.expiration-time'"
+  },
+  {
+    "name": "security.jwt.issuer",
+    "type": "java.lang.String",
+    "description": "A description for 'security.jwt.issuer'"
+  },
+  {
+    "name": "notification.email.from",
+    "type": "java.lang.String",
+    "description": "A description for 'notification.email.from'"
+  },
+  {
+    "name": "notification.email.sendgrid-api-key",
+    "type": "java.lang.String",
+    "description": "A description for 'notification.email.sendgrid-api-key'"
+  },
+  {
+    "name": "notification.push.fcm.credentials-path",
+    "type": "java.lang.String",
+    "description": "A description for 'notification.push.fcm.credentials-path'"
+  },
+  {
+    "name": "notification.sms.twilio.account-sid",
+    "type": "java.lang.String",
+    "description": "A description for 'notification.sms.twilio.account-sid'"
+  },
+  {
+    "name": "notification.sms.twilio.from",
+    "type": "java.lang.String",
+    "description": "A description for 'notification.sms.twilio.from'"
+  },
+  {
+    "name": "notification.sms.twilio.auth-token",
+    "type": "java.lang.String",
+    "description": "A description for 'notification.sms.twilio.auth-token'"
+  },
+  {
+    "name": "spring.kafka.consumer.max-poll-interval",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.consumer.max-poll-interval'"
+  },
+  {
+    "name": "spring.kafka.consumer.session-timeout",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.consumer.session-timeout'"
+  }
+]}
