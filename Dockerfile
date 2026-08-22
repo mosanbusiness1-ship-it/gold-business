@@ -22,7 +22,7 @@ WORKDIR /app
 # JAR généré par Maven
 COPY --from=build /app/target/gold-business-0.0.1-SNAPSHOT.jar /app/app.jar
 
-ENV APP_KAFKA_ENABLED=false
+ENV APP_KAFKA_ENABLED=true
 EXPOSE 8080
 
 # Render injecte la variable PORT; on l'utilise pour ne pas écouter sur un port figé.
