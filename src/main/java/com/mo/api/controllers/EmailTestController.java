@@ -30,19 +30,19 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class EmailTestController {
 
-    @Value("${notification.email.from}")
+    @Value("${notification.email.from:your-email@example.com}")
     private String fromEmail;
 
-    @Value("${notification.email.sendgrid-api-key}")
+    @Value("${notification.email.sendgrid-api-key:}")
     private String sendgridApiKey;
 
-    @Value("${notification.sms.twilio.account-sid}")
+    @Value("${notification.sms.twilio.account-sid:}")
     private String accountSid;
 
-    @Value("${notification.sms.twilio.auth-token}")
+    @Value("${notification.sms.twilio.auth-token:}")
     private String authToken;
 
-    @Value("${notification.sms.twilio.from}")
+    @Value("${notification.sms.twilio.from:+12314473797}")
     private String fromPhone;
 
     private static final String PLATFORM_NAME = "Golden Business";
@@ -90,6 +90,10 @@ public class EmailTestController {
     @GetMapping
     @Operation(summary = "Send test SMS", description = "Send a sample SMS message using configured Twilio credentials")
     public String sendTestSms() {
+        if (accountSid == null || accountSid.isBlank() || authToken == null || authToken.isBlank() || fromPhone == null || fromPhone.isBlank()) {
+            return "Twilio non configuré. Définis TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN et TWILIO_FROM dans Render.";
+        }
+
         String to = "+237657371255"; // remplace par ton vrai numéro de téléphone pour test
         String userName = "Mohamed";
         String productName = "Chemise noire";
