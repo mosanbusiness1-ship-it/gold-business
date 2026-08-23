@@ -1,6 +1,10 @@
 package com.mo.core.services;
 import com.mo.auth.JwtService;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -205,6 +209,12 @@ public class OrganisationService {
         List<Organisation> organisations = organisationRepository.findAll();
 
         return organisations;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Organisation> getVerifiedOrganisations(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return organisationRepository.findByVerifiedTrue(pageable);
     }
 
    

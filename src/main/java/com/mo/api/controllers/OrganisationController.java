@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -133,6 +134,15 @@ public class OrganisationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(res);
     }
 
+    @GetMapping("/verified")
+    @Operation(summary = "List verified organisations", description = "Return a paginated list of verified organisations")
+    public ResponseEntity<Page<CreateOrganisationResponseDTO>> getVerifiedOrganisations(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<Organisation> organisations = organisationService.getVerifiedOrganisations(page, size);
+        return ResponseEntity.ok(organisations.map(createOrganisationResponseMapper::toDto));
+    }
+
     // List of organisations accessible to everyone
     @GetMapping("/all")
     @Operation(summary = "List organisations", description = "Return all organisations visible to the caller")
@@ -192,6 +202,16 @@ public class OrganisationController {
     public ResponseEntity<List<Organisation>> getRootOrganisations() {
         List<Organisation> roots = organisationService.getRootOrganisations();
         return ResponseEntity.ok(roots);
+    }
+
+    // Get verified organisations (paged, accepts page and limit)
+    @GetMapping("/verified/limit")
+    @Operation(summary = "Get verified organisations by page/limit", description = "Return a page of verified organisations; specify page and limit")
+    public ResponseEntity<org.springframework.data.domain.Page<CreateOrganisationResponseDTO>> getVerifiedOrganisationsLimit(
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int limit) {
+        org.springframework.data.domain.Page<Organisation> organisations = organisationService.getVerifiedOrganisations(page, limit);
+        return ResponseEntity.ok(organisations.map(createOrganisationResponseMapper::toDto));
     }
 
     // Change parent: protected
