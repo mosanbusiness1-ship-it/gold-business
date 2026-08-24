@@ -54,6 +54,7 @@ public class SecurityConfiguration {
             .cors(Customizer.withDefaults()) // active CORS
             .authorizeHttpRequests(auth -> auth
             	    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // OPTIONS préflight autorisé
+            	    .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/organisations/**", "/public/needs/**", "/public/auctions/**").permitAll()
             	    .requestMatchers("/public/**", "/api/totp/**", "/api/oauth2/**", "/error").permitAll()
             	    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs", "/swagger-resources/**", "/swagger-resources").permitAll() // Swagger public
             	    .anyRequest().authenticated()

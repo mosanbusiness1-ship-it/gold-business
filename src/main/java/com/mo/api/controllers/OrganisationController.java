@@ -134,7 +134,10 @@ public class OrganisationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(res);
     }
 
+    
     @GetMapping("/verified")
+    @Transactional(readOnly = true)
+    @PreAuthorize("permitAll()")
     @Operation(summary = "List verified organisations", description = "Return a paginated list of verified organisations")
     public ResponseEntity<Page<CreateOrganisationResponseDTO>> getVerifiedOrganisations(
             @RequestParam(defaultValue = "0") int page,
@@ -145,6 +148,7 @@ public class OrganisationController {
 
     // List of organisations accessible to everyone
     @GetMapping("/all")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "List organisations", description = "Return all organisations visible to the caller")
     public ResponseEntity<List<CreateOrganisationResponseDTO>> getAll(){
         List<Organisation> orgs = organisationService.getAllOrganisations();
@@ -159,7 +163,7 @@ public class OrganisationController {
 
     // Get an organisation: protected
     @GetMapping("/{id}")
-    @PreAuthorize("@organisationSecurity.isAdminOfOrganisation(authentication, #id)")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get organisation", description = "Return a single organisation by ID for authorized users")
     public ResponseEntity<Organisation> getOrganisation(@PathVariable Long id) {
         return organisationService.getOrganisationById(id)
@@ -198,6 +202,7 @@ public class OrganisationController {
 
     // Retrieve root organisations: accessible
     @GetMapping("/roots")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get root organisations", description = "Return top-level organisations with no parent")
     public ResponseEntity<List<Organisation>> getRootOrganisations() {
         List<Organisation> roots = organisationService.getRootOrganisations();
@@ -206,6 +211,7 @@ public class OrganisationController {
 
     // Get verified organisations (paged, accepts page and limit)
     @GetMapping("/verified/limit")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get verified organisations by page/limit", description = "Return a page of verified organisations; specify page and limit")
     public ResponseEntity<org.springframework.data.domain.Page<CreateOrganisationResponseDTO>> getVerifiedOrganisationsLimit(
             @RequestParam(required = false, defaultValue = "0") int page,
@@ -308,7 +314,7 @@ public class OrganisationController {
 
 
     @GetMapping("/{orgId}/products")
-    @PreAuthorize("@organisationSecurity.canAccessProducts(authentication, #orgId)")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get organisation products", description = "Return the list of products for the organisation using DTO mapping")
     public ResponseEntity<List<Object>> getOrganisationProducts(
             @PathVariable Long orgId,
@@ -325,6 +331,7 @@ public class OrganisationController {
 
     // SEARCH AND STATISTICS
     @GetMapping("/search")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Search organisations", description = "Search organisations by name, type, or minimum product count")
     public ResponseEntity<List<Organisation>> searchOrganisations(
             @RequestParam(required = false) String name,
@@ -337,6 +344,7 @@ public class OrganisationController {
     }
 
     @GetMapping("/{id}/stats")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get organisation stats", description = "Return aggregated statistics for the organisation")
     public ResponseEntity<OrganisationStats> getOrganisationStats(@PathVariable Long id) {
         OrganisationStats stats = organisationService.getOrganisationStats(id);
@@ -398,6 +406,7 @@ public class OrganisationController {
      * GET /api/organisations/{orgId}/reviews - List reviews for the organisation
      */
     @GetMapping("/{orgId}/reviews")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "List organisation reviews",
                description = "List customer reviews for an organisation, optionally only verified purchases",
                responses = {@ApiResponse(responseCode = "200", description = "OK")})
@@ -426,6 +435,7 @@ public class OrganisationController {
      * GET /api/organisations/{orgId}/ratings - Get rating summary
      */
     @GetMapping("/{orgId}/ratings")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get rating summary",
                description = "Retrieve aggregated rating summary for the organisation",
                responses = {@ApiResponse(responseCode = "200", description = "OK")})

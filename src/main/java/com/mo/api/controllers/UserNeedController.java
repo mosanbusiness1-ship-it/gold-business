@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/public/needs")
@@ -166,6 +167,7 @@ public class UserNeedController {
 
     // ✅ Liste des besoins d’un utilisateur
     @GetMapping("/user/{userId}")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get user needs", description = "Return all needs created by the specified user")
     //@PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public List<AbstractUserNeed> getUserNeeds(@PathVariable Long userId) {
@@ -183,6 +185,7 @@ public class UserNeedController {
 
     // ✅ Produits correspondant aux besoins d’un utilisateur
     @GetMapping("/user/{userId}/matching-products")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get matching products", description = "Return products matching the user's needs")
     //@PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public List<AbstractProduct> getMatchingProducts(@PathVariable Long userId) {

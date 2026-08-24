@@ -62,7 +62,7 @@ import jakarta.validation.Valid;
 
 
 @RestController
-@RequestMapping("/public/products")
+@RequestMapping("/api/products")
 
 public class ProductController {
     // private String user_role = "ADMIN"; // Exemple de rôle, à adapter selon votre
@@ -159,6 +159,7 @@ public ResponseEntity<CreateProductResponseDto> createProduct(@RequestBody Abstr
 
     // Lecture par ID
     @GetMapping("/{id}")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get product by id", description = "Return a single product by its ID using DTO mapping")
     public JsonNode getProduct(@PathVariable Long id) {
         AbstractProduct product = service.getProductById(id);
@@ -185,6 +186,7 @@ public ResponseEntity<CreateProductResponseDto> createProduct(@RequestBody Abstr
 
     // ✅ Liste paginée
     @GetMapping
+    @PreAuthorize("permitAll()")
     @Operation(summary = "List products", description = "Return a pageable list of all products in DTO form")
     public Page<JsonNode> listProducts(
             @RequestParam(defaultValue = "0") int page,
@@ -205,6 +207,7 @@ public ResponseEntity<CreateProductResponseDto> createProduct(@RequestBody Abstr
 
     // ✅ Recherche simple par nom et type
     @GetMapping("/search")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Search products", description = "Search products by name and type")
     public List<AbstractProduct> searchProducts(
             @RequestParam(required = false) String name,
@@ -214,6 +217,7 @@ public ResponseEntity<CreateProductResponseDto> createProduct(@RequestBody Abstr
 
     // Recherche avec filtres (nom, type, prix min, prix max)
     @GetMapping("/search-with-filters")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Search products with filters", description = "Search products with optional price and type filters")
     public List<AbstractProduct> searchWithFilters(
             @RequestParam(required = false) String name,
@@ -247,12 +251,14 @@ public ResponseEntity<CreateProductResponseDto> createProduct(@RequestBody Abstr
 
     // ✅ Historique réel via ProductHistory
     @GetMapping("/{id}/audit")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get product audit history", description = "Return audit history entries for a product")
     public List<ProductHistory> getProductAuditHistory(@PathVariable Long id) {
         return auditService.getProductHistory(id);
     }
 
     @GetMapping("/search-elasticsearch")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Search products in Elasticsearch", description = "Search products by keywords using Elasticsearch")
     public ResponseEntity<List<Map<String, Object>>> searchProductsElasticsearch(
             @RequestParam String keywords) {
