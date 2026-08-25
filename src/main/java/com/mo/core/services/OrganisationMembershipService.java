@@ -80,14 +80,14 @@ public class OrganisationMembershipService {
     }
     
     public List<Organisation> getUserCommunityOrganisation(Long userId, OrganisationType orgType) {
-        return memberRepository.findByUserIdAndType(userId, OrganisationType.SALES_COMMUNITY)
+        return memberRepository.findByUserIdAndType(userId, OrganisationType.COMMUNITY)
             .stream()
             .map(OrganisationMember::getOrganisation)
             .collect(Collectors.toList());
     }
     
     public List<Organisation> getUserGroupOrganisation(Long userId, OrganisationType orgType) {
-        return memberRepository.findByUserIdAndType(userId, OrganisationType.SALES_GROUP)
+        return memberRepository.findByUserIdAndType(userId, OrganisationType.GROUP)
             .stream()
             .map(OrganisationMember::getOrganisation)
             .collect(Collectors.toList());

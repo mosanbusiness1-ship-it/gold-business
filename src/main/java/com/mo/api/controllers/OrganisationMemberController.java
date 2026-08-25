@@ -90,13 +90,13 @@ public class OrganisationMemberController {
     @GetMapping("/{userId}/community")
     @Operation(summary = "Get user community organisations", description = "Return sales community organisations for the given user")
     public ResponseEntity<List<Organisation>> getUserCommunity(@PathVariable Long userId) {
-        return ResponseEntity.ok(membershipService.getUserGroupOrganisation(userId, OrganisationType.SALES_COMMUNITY));
+        return ResponseEntity.ok(membershipService.getUserGroupOrganisation(userId, OrganisationType.COMMUNITY));
     }
     
     @GetMapping("/{userId}/group")
     @Operation(summary = "Get user group organisations", description = "Return sales group organisations for the given user")
     public ResponseEntity<List<Organisation>> getUserGroup(@PathVariable Long userId) {
-        return ResponseEntity.ok(membershipService.getUserGroupOrganisation(userId, OrganisationType.SALES_GROUP));
+        return ResponseEntity.ok(membershipService.getUserGroupOrganisation(userId, OrganisationType.GROUP));
     }
     
     

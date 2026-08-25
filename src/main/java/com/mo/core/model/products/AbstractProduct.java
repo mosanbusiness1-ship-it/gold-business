@@ -110,9 +110,10 @@ public abstract class AbstractProduct {
     @Column(nullable = false)
     private boolean isPlatformOwner = false;
 
-    @Column(nullable = false)
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean certified = false;
-    
+
 
     @ToString.Include
     @Column(nullable = false)
