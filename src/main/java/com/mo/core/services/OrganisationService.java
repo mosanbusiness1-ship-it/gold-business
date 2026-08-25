@@ -213,8 +213,17 @@ public class OrganisationService {
 
     @Transactional(readOnly = true)
     public Page<Organisation> getVerifiedOrganisations(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return organisationRepository.findByVerifiedTrue(pageable);
+        log.info("getVerifiedOrganisations called: page={}, size={}", page, size);
+        try {
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+            Page<Organisation> result = organisationRepository.findByVerifiedTrue(pageable);
+            log.info("getVerifiedOrganisations success: totalElements={}, totalPages={}",
+                    result.getTotalElements(), result.getTotalPages());
+            return result;
+        } catch (Exception ex) {
+            log.error("getVerifiedOrganisations failed: page={}, size={}", page, size, ex);
+            throw ex;
+        }
     }
 
    

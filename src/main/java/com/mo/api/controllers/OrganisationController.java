@@ -142,8 +142,16 @@ public class OrganisationController {
     public ResponseEntity<Page<CreateOrganisationResponseDTO>> getVerifiedOrganisations(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<Organisation> organisations = organisationService.getVerifiedOrganisations(page, size);
-        return ResponseEntity.ok(organisations.map(createOrganisationResponseMapper::toDto));
+        log.info("GET /api/organisations/verified called: page={}, size={}", page, size);
+        try {
+            Page<Organisation> organisations = organisationService.getVerifiedOrganisations(page, size);
+            log.info("GET /api/organisations/verified success: totalElements={}, totalPages={}",
+                    organisations.getTotalElements(), organisations.getTotalPages());
+            return ResponseEntity.ok(organisations.map(createOrganisationResponseMapper::toDto));
+        } catch (Exception ex) {
+            log.error("GET /api/organisations/verified failed: page={}, size={}", page, size, ex);
+            throw ex;
+        }
     }
 
     // List of organisations accessible to everyone
@@ -151,14 +159,20 @@ public class OrganisationController {
     @PreAuthorize("permitAll()")
     @Operation(summary = "List organisations", description = "Return all organisations visible to the caller")
     public ResponseEntity<List<CreateOrganisationResponseDTO>> getAll(){
-        List<Organisation> orgs = organisationService.getAllOrganisations();
-        List<CreateOrganisationResponseDTO> orgDtos = new ArrayList<>();
-        orgs.forEach(org -> {
-        	CreateOrganisationResponseDTO orgDto = createOrganisationResponseMapper.toDto(org);
-	        orgDtos.add(orgDto);
-	    });
-
-        return ResponseEntity.ok(orgDtos);
+        log.info("GET /api/organisations/all called");
+        try {
+            List<Organisation> orgs = organisationService.getAllOrganisations();
+            log.info("GET /api/organisations/all success: count={}", orgs.size());
+            List<CreateOrganisationResponseDTO> orgDtos = new ArrayList<>();
+            orgs.forEach(org -> {
+                CreateOrganisationResponseDTO orgDto = createOrganisationResponseMapper.toDto(org);
+                orgDtos.add(orgDto);
+            });
+            return ResponseEntity.ok(orgDtos);
+        } catch (Exception ex) {
+            log.error("GET /api/organisations/all failed", ex);
+            throw ex;
+        }
     }
 
     // Get an organisation: protected
@@ -216,8 +230,16 @@ public class OrganisationController {
     public ResponseEntity<org.springframework.data.domain.Page<CreateOrganisationResponseDTO>> getVerifiedOrganisationsLimit(
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "10") int limit) {
-        org.springframework.data.domain.Page<Organisation> organisations = organisationService.getVerifiedOrganisations(page, limit);
-        return ResponseEntity.ok(organisations.map(createOrganisationResponseMapper::toDto));
+        log.info("GET /api/organisations/verified/limit called: page={}, limit={}", page, limit);
+        try {
+            org.springframework.data.domain.Page<Organisation> organisations = organisationService.getVerifiedOrganisations(page, limit);
+            log.info("GET /api/organisations/verified/limit success: totalElements={}, totalPages={}",
+                    organisations.getTotalElements(), organisations.getTotalPages());
+            return ResponseEntity.ok(organisations.map(createOrganisationResponseMapper::toDto));
+        } catch (Exception ex) {
+            log.error("GET /api/organisations/verified/limit failed: page={}, limit={}", page, limit, ex);
+            throw ex;
+        }
     }
 
     // Change parent: protected
