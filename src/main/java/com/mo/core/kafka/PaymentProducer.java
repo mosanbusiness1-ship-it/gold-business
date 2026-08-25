@@ -22,6 +22,9 @@ public class PaymentProducer {
         this.kafkaTemplate = kafkaTemplate;
     }
 
+    @Value("${kafka.topics.payment-request:payment-request}")
+    private String topicPaymentRequest;
+
     public void emitPaymentRequest(PaymentRequestEvent event) {
         if (kafkaTemplate == null) {
             log.warn("Kafka désactivé ou non configuré : paiement non envoyé pour ref={} amount={}",

@@ -16,15 +16,6 @@ public class OrganisationValidationProducer {
 
     private final KafkaTemplate<String, OrganisationProductValidationEvent> kafkaTemplate;
 
-    @Value("${kafka.topics.org-validation-pending:org-validation-pending}")
-    private String topicPending;
-
-    @Value("${kafka.topics.org-validation-approved:org-validation-approved}")
-    private String topicApproved;
-
-    @Value("${kafka.topics.org-validation-rejected:org-validation-rejected}")
-    private String topicRejected;
-
     public OrganisationValidationProducer() {
         this.kafkaTemplate = null;
     }
@@ -33,6 +24,15 @@ public class OrganisationValidationProducer {
     public OrganisationValidationProducer(KafkaTemplate<String, OrganisationProductValidationEvent> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
+
+    @Value("${kafka.topics.org-validation-pending:org-validation-pending}")
+    private String topicPending;
+
+    @Value("${kafka.topics.org-validation-approved:org-validation-approved}")
+    private String topicApproved;
+
+    @Value("${kafka.topics.org-validation-rejected:org-validation-rejected}")
+    private String topicRejected;
 
     /**
      * Emit a validation pending event when a product is submitted for validation.
