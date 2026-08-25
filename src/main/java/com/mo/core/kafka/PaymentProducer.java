@@ -13,8 +13,9 @@ public class PaymentProducer {
 
     private final KafkaTemplate<String, PaymentRequestEvent> kafkaTemplate;
 
-    @Value("${kafka.topics.payment-request:payment-request}")
-    private String topicPaymentRequest;
+    public PaymentProducer() {
+        this.kafkaTemplate = null;
+    }
 
     @Autowired(required = false)
     public PaymentProducer(KafkaTemplate<String, PaymentRequestEvent> kafkaTemplate) {

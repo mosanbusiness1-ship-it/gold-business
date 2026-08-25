@@ -25,6 +25,10 @@ public class OrganisationValidationProducer {
     @Value("${kafka.topics.org-validation-rejected:org-validation-rejected}")
     private String topicRejected;
 
+    public OrganisationValidationProducer() {
+        this.kafkaTemplate = null;
+    }
+
     @Autowired(required = false)
     public OrganisationValidationProducer(KafkaTemplate<String, OrganisationProductValidationEvent> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
