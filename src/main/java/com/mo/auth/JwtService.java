@@ -3,12 +3,13 @@ package com.mo.auth;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -141,7 +142,15 @@ public class JwtService {
     }
 
     public List<String> extractRoles(String token) {
-        return extractClaim(token, claims -> claims.get("roles", List.class));
+        return extractClaim(token, claims -> {
+            List<?> rawRoles = claims.get("roles", List.class);
+            if (rawRoles == null) {
+                return Collections.emptyList();
+            }
+            return rawRoles.stream()
+                    .map(String::valueOf)
+                    .collect(Collectors.toList());
+        });
     }
 
     public boolean hasRole(String token, String role) {
@@ -173,12 +182,23 @@ public class JwtService {
 
     private String getCurrentRequestIp() {
         try {
-            return ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
-                    .getRequest().getRemoteAddr();
-        } catch (IllegalStateException e) {
+            ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpServletRequest request = attrs.getRequest();
+
+            String forwardedFor = request.getHeader("X-Forwarded-For");
+            if (StringUtils.hasText(forwardedFor)) {
+                return forwardedFor.split(",")[0].trim();
+            }
+
+            String realIp = request.getHeader("X-Real-IP");
+            if (StringUtils.hasText(realIp)) {
+                return realIp;
+            }
+
+            return request.getRemoteAddr();
+        } catch (Exception e) {
             return "unknown";
         }
     }
-    
     
 }

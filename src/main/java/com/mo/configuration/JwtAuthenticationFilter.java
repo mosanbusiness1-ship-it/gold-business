@@ -115,9 +115,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String tokenIp = jwtService.extractClaim(jwt, claims -> claims.get("ip", String.class));
-        if (tokenIp != null && !tokenIp.equals(request.getRemoteAddr())) {
-            throw new JwtException("Token IP mismatch");
+        String requestIp = resolveClientIp(request);
+        if (tokenIp != null && !"unknown".equals(tokenIp) && !tokenIp.equals(requestIp)) {
+            logger.warn("JWT IP mismatch: tokenIp={}, requestIp={}, path={}", tokenIp, requestIp, request.getRequestURI());
         }
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (StringUtils.hasText(forwardedFor)) {
+            return forwardedFor.split(",")[0].trim();
+        }
+
+        String realIp = request.getHeader("X-Real-IP");
+        if (StringUtils.hasText(realIp)) {
+            return realIp;
+        }
+
+        return request.getRemoteAddr();
     }
 
     private void validateUserDetails(UserDetails userDetails, String jwt) {
