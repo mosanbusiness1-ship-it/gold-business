@@ -97,4 +97,6 @@ public abstract class AbstractProductDto {
 
     private Integer version;
 
+    private Boolean certified;
+
 }

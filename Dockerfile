@@ -22,9 +22,11 @@ WORKDIR /app
 # JAR généré par Maven
 COPY --from=build /app/target/gold-business-0.0.1-SNAPSHOT.jar /app/app.jar
 
-ENV APP_KAFKA_ENABLED=true
+ARG AUTO_UPDATE_DATABASE=true
+ENV AUTO_UPDATE_DATABASE=${AUTO_UPDATE_DATABASE}
+ENV APP_KAFKA_ENABLED=false
 EXPOSE 8080
 
-# Render injecte la variable PORT; on l'utilise pour ne pas écouter sur un port figé.
-ENTRYPOINT ["/bin/sh", "-c", "exec java -jar /app/app.jar --server.port=${PORT:-8080}"]
+# Safe default: no schema mutation unless explicitly enabled in Docker/Render.
+ENTRYPOINT ["/bin/sh", "-c", "if [ \"$AUTO_UPDATE_DATABASE\" = \"true\" ]; then export DB_HIBERNATE_DDL_AUTO=update; else export DB_HIBERNATE_DDL_AUTO=validate; fi; exec java -jar /app/app.jar --server.port=${PORT:-8080}"]
 

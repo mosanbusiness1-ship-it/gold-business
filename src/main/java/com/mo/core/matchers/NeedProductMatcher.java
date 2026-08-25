@@ -46,6 +46,7 @@ public class NeedProductMatcher {
 	    //productFields.put("description", AbstractProduct::getDescription);
 	    productFields.put("price", AbstractProduct::getPrice);
 	    productFields.put("currency", AbstractProduct::getCurrency);
+	    productFields.put("certified", AbstractProduct::isCertified);
 	    //productFields.put("photo_urls", AbstractProduct::getPhotoUrls);
 
 	    // Champs spécifiques par type
@@ -255,6 +256,7 @@ public class NeedProductMatcher {
             case "name": return product.getName();
             case "description": return product.getDescription();
             case "max_price": return product.getPrice();
+            case "certified": return product.isCertified();
             case "photo_urls": return product.getPhotoUrls();
         }
 

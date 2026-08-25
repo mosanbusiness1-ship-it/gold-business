@@ -109,6 +109,9 @@ public abstract class AbstractProduct {
     @ToString.Include
     @Column(nullable = false)
     private boolean isPlatformOwner = false;
+
+    @Column(nullable = false)
+    private boolean certified = false;
     
 
     @ToString.Include

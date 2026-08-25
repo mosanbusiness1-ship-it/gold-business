@@ -82,6 +82,9 @@ public abstract class AbstractProductDocument {
     @Field(type = FieldType.Integer, name = "version")
     private int version = 1;
 
+    @Field(type = FieldType.Boolean, name = "certified")
+    private boolean certified = false;
+
     @Field(type = FieldType.Date, format = DateFormat.date_time, name = "indexed_at")
     private Instant indexedAt;
 
