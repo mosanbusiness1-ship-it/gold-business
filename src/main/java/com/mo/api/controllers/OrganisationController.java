@@ -828,4 +828,34 @@ public class OrganisationController {
         resp.put("savedNeedIds", savedNeeds.stream().map(AbstractUserNeed::getId).toList());
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
+
+    @PatchMapping("/{orgId}/products/{productId}/certify")
+    @PreAuthorize("@organisationSecurity.isOwnerOrAdmin(authentication, #orgId)")
+    @Operation(summary = "Certify a product for the organisation",
+               description = "Owner or admin can certify or uncertify a product attached to the organisation",
+               requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                   description = "Certification payload with a boolean 'certified' field",
+                   required = true,
+                   content = @Content(mediaType = "application/json",
+                       examples = @ExampleObject(value = "{\"certified\": true}")))
+    )
+    public ResponseEntity<?> certifyProduct(
+            @PathVariable Long orgId,
+            @PathVariable Long productId,
+            @RequestBody Map<String, Boolean> request) {
+
+        try {
+            Boolean certified = request.get("certified");
+            if (certified == null) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Field 'certified' is required"));
+            }
+
+            AbstractProduct product = organisationService.certifyProduct(orgId, productId, certified);
+            return ResponseEntity.ok(product);
+        } catch (EntityNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+        }
+    }
 }

@@ -299,6 +299,12 @@ public class ProductService {
         return auditService.getProductHistory(id);
     }
 
+    public AbstractProduct setCertificationStatus(Long productId, boolean certified) {
+        AbstractProduct product = getProductById(productId);
+        product.setCertified(certified);
+        return saveProduct(product);
+    }
+
 
 
 

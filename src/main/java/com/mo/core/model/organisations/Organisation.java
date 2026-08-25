@@ -59,8 +59,11 @@ public class Organisation {
     @Column(nullable = false, length = 50)
     private OrganisationType type;
     
+    @Column(length = 1000)
+    private String logoUrl;
+
     @Column(nullable = false, length = 100)
-    private String category; // free-form category (telephone, ordinateur, pantalon, bijoux, ...)
+    private String category; // phone, food, pc, fashion, realestate, service, etc.
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -121,9 +124,6 @@ public class Organisation {
     // Trust & metadata fields
     @Builder.Default
     private boolean verified = false;
-
-    @Builder.Default
-    private boolean certified = false;
 
     @ElementCollection(targetClass = OrganisationAdvantage.class)
     @CollectionTable(name = "organisation_advantages", joinColumns = @JoinColumn(name = "organisation_id"))
@@ -233,7 +233,6 @@ public class Organisation {
         this.needs.remove(need);
         need.getOrganisations().remove(this);
     }
-
 }
 
 

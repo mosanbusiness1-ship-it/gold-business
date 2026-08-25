@@ -228,11 +228,24 @@ public class OrganisationService {
     public Organisation updateOrganisation(Long id, Organisation organisationDetails) {
         Organisation organisation = organisationRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Organisation not found with id: " + id));
-        
-        organisation.setName(organisationDetails.getName());
-        organisation.setType(organisationDetails.getType());
+
+        if (organisationDetails.getName() != null && !organisationDetails.getName().isBlank()) {
+            organisation.setName(organisationDetails.getName());
+        }
+        if (organisationDetails.getType() != null) {
+            organisation.setType(organisationDetails.getType());
+        }
+        if (organisationDetails.getCategory() != null && !organisationDetails.getCategory().isBlank()) {
+            organisation.setCategory(organisationDetails.getCategory());
+        }
+        if (organisationDetails.getVisibility() != null) {
+            organisation.setVisibility(organisationDetails.getVisibility());
+        }
+        if (organisationDetails.getLogoUrl() != null) {
+            organisation.setLogoUrl(organisationDetails.getLogoUrl().isBlank() ? null : organisationDetails.getLogoUrl());
+        }
         organisation.setUpdatedAt(LocalDateTime.now());
-        
+
         return organisationRepository.save(organisation);
     }
 
@@ -743,6 +756,10 @@ public class OrganisationService {
 
         productMetaRepository.save(meta);
 
+        // Publication approval and product certification are distinct concerns.
+        // Approval means the organisation accepts the product for publication.
+        // Certification is a separate explicit action and should be managed by the dedicated certify endpoint.
+
         // Emit Kafka event based on approval status
         OrganisationProductValidationEvent event = OrganisationProductValidationEvent.builder()
             .organisationId(organisationId)
@@ -1131,4 +1148,21 @@ public class OrganisationService {
             return escrow;
         }
 
+        public AbstractProduct certifyProduct(Long organisationId, Long productId, boolean certified) {
+	    Organisation organisation = organisationRepository.findById(organisationId)
+	        .orElseThrow(() -> new EntityNotFoundException("Organisation not found"));
+
+	    AbstractProduct product = productRepository.findById(productId)
+	        .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+
+	    boolean containsProduct = organisation.getProducts().stream()
+	        .anyMatch(p -> p.getId().equals(productId));
+
+	    if (!containsProduct) {
+	        throw new IllegalStateException("Product is not part of this organisation");
+	    }
+
+	    product.setCertified(certified);
+	    return productRepository.save(product);
+	}
 }

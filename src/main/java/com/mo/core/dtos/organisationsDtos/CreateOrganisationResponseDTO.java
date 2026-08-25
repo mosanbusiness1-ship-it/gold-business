@@ -41,6 +41,9 @@ public class CreateOrganisationResponseDTO {
     
     private String category;
 
+    @JsonProperty("logo_url")
+    private String logoUrl;
+
     private OrganisationVisibility visibility = OrganisationVisibility.PRIVATE;
     
     @JsonProperty("public_join")
