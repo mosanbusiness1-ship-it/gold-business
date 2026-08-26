@@ -46,6 +46,8 @@ public class CreateOrganisationDTO {
     @JsonProperty("public_join")
     private boolean publicJoin;
 
+    private boolean verified;
+
     @JsonProperty("requires_approval")
     private boolean requiresApproval;
     
