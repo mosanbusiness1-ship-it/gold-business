@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.mo.auth.User;
 import com.mo.core.dtos.AddProductToOrganisationRequest;
 import com.mo.core.dtos.BulkNeedsForOrganisationRequest;
 import com.mo.core.dtos.OrganisationSearchCriteria;
@@ -49,6 +50,7 @@ import com.mo.core.dtos.organisationsDtos.OrganisationStats;
 import com.mo.core.dtos.organisationsDtos.OrganisationWithProductsDTO;
 import com.mo.core.dtos.organisationsDtos.WebhookSubscriptionRequestDTO;
 import com.mo.core.dtos.organisationsDtos.ProductValidationRequestDTO;
+import com.mo.core.dtos.organisationsDtos.UpdatedOrganisationResponseDTO;
 import com.mo.core.dtos.organisationsDtos.CommissionConfigDTO;
 import com.mo.core.dtos.productsDtos.AbstractProductDto;
 import com.mo.core.enums.MemberType;
@@ -70,6 +72,8 @@ import com.mo.mappers.organisationMappers.CreateOrganisationResponseMapper;
 import com.mo.mappers.organisationMappers.OrgProductMapper;
 import com.mo.mappers.productsMappers.ProductMapperJackson;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import com.mo.core.dtos.userNeedsDTO.AbstractUserNeedDto;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -189,11 +193,71 @@ public class OrganisationController {
     @PutMapping("/{id}")
     @PreAuthorize("@organisationSecurity.isAdminOfOrganisation(authentication, #id)")
     @Operation(summary = "Update organisation", description = "Update the organisation details for an authorised administrator")
-    public ResponseEntity<Organisation> updateOrganisation(
+    public ResponseEntity<UpdatedOrganisationResponseDTO> updateOrganisation(
             @PathVariable Long id,
             @RequestBody Organisation organisationDetails) {
         Organisation updatedOrg = organisationService.updateOrganisation(id, organisationDetails);
-        return ResponseEntity.ok(updatedOrg);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = null;
+        if (authentication != null) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof User) {
+                user = (User) principal;
+            }
+        }
+        UpdatedOrganisationResponseDTO updatedOrganisationResponseDTO = new UpdatedOrganisationResponseDTO();
+        updatedOrganisationResponseDTO.setAdmin(user);
+        updatedOrganisationResponseDTO.setOrganisation(updatedOrg);
+        return ResponseEntity.ok(updatedOrganisationResponseDTO);
+    }
+
+    // Update organisation logo url: protected
+    @PutMapping("/update-logo/{id}")
+    @PreAuthorize("@organisationSecurity.isAdminOfOrganisation(authentication, #id)")
+    @Operation(summary = "Update organisation logo", description = "Update the organisation logo URL for an authorised administrator")
+    public ResponseEntity<UpdatedOrganisationResponseDTO> updateLogoUrl(
+            @PathVariable Long id,
+            @RequestBody String logoUrl) {
+        Organisation organisationDetails = organisationService.getOrganisationById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organisation not found"));
+        organisationDetails.setLogoUrl(logoUrl);
+
+        Organisation updatedOrg = organisationService.updateOrganisation(id, organisationDetails);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = null;
+        if (authentication != null) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof User) {
+                user = (User) principal;
+            }
+        }
+        UpdatedOrganisationResponseDTO updatedOrganisationResponseDTO = new UpdatedOrganisationResponseDTO();
+        updatedOrganisationResponseDTO.setAdmin(user);
+        updatedOrganisationResponseDTO.setOrganisation(updatedOrg);
+        return ResponseEntity.ok(updatedOrganisationResponseDTO);
+    }
+
+    // Verify an organisation: protected
+    @PutMapping("/verify/{id}")
+    @PreAuthorize("hasRole('ROOT') or hasRole('ADMIN')")
+    @Operation(summary = "Verify an organisation", description = "Update the organisation status to verified by the system administrator: the boolean variable verified is set to true")
+    public ResponseEntity<UpdatedOrganisationResponseDTO> verifyOrganisation(@PathVariable Long id) {
+        Organisation notVerifiedOrg = organisationService.getOrganisationById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organisation not found"));
+        notVerifiedOrg.setVerified(true);
+        Organisation verifiedOrg = organisationService.updateOrganisation(id, notVerifiedOrg);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = null;
+        if (authentication != null) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof User) {
+                user = (User) principal;
+            }
+        }
+        UpdatedOrganisationResponseDTO updatedOrganisationResponseDTO = new UpdatedOrganisationResponseDTO();
+        updatedOrganisationResponseDTO.setAdmin(user);
+        updatedOrganisationResponseDTO.setOrganisation(verifiedOrg);
+        return ResponseEntity.ok(updatedOrganisationResponseDTO);
     }
 
     // Delete: protected
