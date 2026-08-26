@@ -171,6 +171,7 @@ public class OrganisationController {
             orgs.forEach(org -> {
                 CreateOrganisationResponseDTO orgDto = createOrganisationResponseMapper.toDto(org);
                 orgDtos.add(orgDto);
+                System.out.println(orgDto);
             });
             return ResponseEntity.ok(orgDtos);
         } catch (Exception ex) {
