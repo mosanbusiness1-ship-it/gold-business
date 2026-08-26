@@ -31,16 +31,26 @@ public class RoleService {
     public boolean isAdmin(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) return false;
 
-        return authentication.getAuthorities().stream()
-            .anyMatch(authority -> authority.getAuthority().equalsIgnoreCase("ADMIN"));
+        return hasRole(authentication, "ADMIN");
     }
 
     // Vérifie si l'utilisateur authentifié a le rôle ROOT
     public boolean isRoot(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) return false;
+        return hasRole(authentication, "ROOT");
+    }
 
-        return authentication.getAuthorities().stream()
-            .anyMatch(authority -> authority.getAuthority().equalsIgnoreCase("ROOT"));
+    private boolean hasRole(Authentication authentication, String roleName) {
+        if (authentication == null) return false;
+        return authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority)
+            .anyMatch(a -> {
+                if (a == null) return false;
+                String normalized = a;
+                if (normalized.startsWith("ROLE_")) {
+                    normalized = normalized.substring(5);
+                }
+                return normalized.equalsIgnoreCase(roleName) || a.equalsIgnoreCase(roleName) || a.equalsIgnoreCase("ROLE_" + roleName);
+            });
     }
 }
 
