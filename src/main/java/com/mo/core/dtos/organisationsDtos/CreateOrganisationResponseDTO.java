@@ -55,6 +55,8 @@ public class CreateOrganisationResponseDTO {
     @JsonProperty("restricted_to_admins_only")
     private boolean restrictedToAdminsOnly;
     
+    private boolean verified;
+    
     @JsonProperty("created_at")
     private LocalDateTime createdAt;
     
