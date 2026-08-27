@@ -171,7 +171,7 @@ public class OrganisationController {
             orgs.forEach(org -> {
                 CreateOrganisationResponseDTO orgDto = createOrganisationResponseMapper.toDto(org);
                 orgDtos.add(orgDto);
-                System.out.println(orgDto);
+               
             });
             return ResponseEntity.ok(orgDtos);
         } catch (Exception ex) {
@@ -241,6 +241,7 @@ public class OrganisationController {
     // Verify an organisation: protected
     @PutMapping("/verify/{id}")
     @PreAuthorize("hasRole('ROOT') or hasRole('ADMIN')")
+    @Transactional
     @Operation(summary = "Verify an organisation", description = "Update the organisation status to verified by the system administrator: the boolean variable verified is set to true")
     public ResponseEntity<UpdatedOrganisationResponseDTO> verifyOrganisation(@PathVariable Long id) {
         Organisation notVerifiedOrg = organisationService.getOrganisationById(id)
