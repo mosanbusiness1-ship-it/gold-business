@@ -75,6 +75,7 @@ public class User implements UserDetails, OAuth2User {
 
     @ToString.Exclude
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<AbstractUserNeed> needs = new ArrayList<>();
 
 //    @Lob

@@ -111,6 +111,7 @@ public class Organisation {
         joinColumns = @JoinColumn(name = "organisation_id"),
         inverseJoinColumns = @JoinColumn(name = "need_id")
     )
+    @JsonIgnore
     @Builder.Default
     private Set<AbstractUserNeed> needs = new HashSet<>();
 

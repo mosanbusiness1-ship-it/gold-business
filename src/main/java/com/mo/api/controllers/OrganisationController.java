@@ -193,30 +193,21 @@ public class OrganisationController {
     // Update an organisation: protected
     @PutMapping("/{id}")
     @PreAuthorize("@organisationSecurity.isAdminOfOrganisation(authentication, #id)")
+    @Transactional
     @Operation(summary = "Update organisation", description = "Update the organisation details for an authorised administrator")
-    public ResponseEntity<UpdatedOrganisationResponseDTO> updateOrganisation(
+    public ResponseEntity<Organisation> updateOrganisation(
             @PathVariable Long id,
             @RequestBody Organisation organisationDetails) {
         Organisation updatedOrg = organisationService.updateOrganisation(id, organisationDetails);
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = null;
-        if (authentication != null) {
-            Object principal = authentication.getPrincipal();
-            if (principal instanceof User) {
-                user = (User) principal;
-            }
-        }
-        UpdatedOrganisationResponseDTO updatedOrganisationResponseDTO = new UpdatedOrganisationResponseDTO();
-        updatedOrganisationResponseDTO.setAdmin(user);
-        updatedOrganisationResponseDTO.setOrganisation(updatedOrg);
-        return ResponseEntity.ok(updatedOrganisationResponseDTO);
+        return ResponseEntity.ok(updatedOrg);
     }
 
     // Update organisation logo url: protected
     @PutMapping("/update-logo/{id}")
     @PreAuthorize("@organisationSecurity.isAdminOfOrganisation(authentication, #id)")
+    @Transactional
     @Operation(summary = "Update organisation logo", description = "Update the organisation logo URL for an authorised administrator")
-    public ResponseEntity<UpdatedOrganisationResponseDTO> updateLogoUrl(
+    public ResponseEntity<Organisation> updateLogoUrl(
             @PathVariable Long id,
             @RequestBody String logoUrl) {
         Organisation organisationDetails = organisationService.getOrganisationById(id)
@@ -224,18 +215,7 @@ public class OrganisationController {
         organisationDetails.setLogoUrl(logoUrl);
 
         Organisation updatedOrg = organisationService.updateOrganisation(id, organisationDetails);
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = null;
-        if (authentication != null) {
-            Object principal = authentication.getPrincipal();
-            if (principal instanceof User) {
-                user = (User) principal;
-            }
-        }
-        UpdatedOrganisationResponseDTO updatedOrganisationResponseDTO = new UpdatedOrganisationResponseDTO();
-        updatedOrganisationResponseDTO.setAdmin(user);
-        updatedOrganisationResponseDTO.setOrganisation(updatedOrg);
-        return ResponseEntity.ok(updatedOrganisationResponseDTO);
+        return ResponseEntity.ok(updatedOrg);
     }
 
     // Verify an organisation: protected
@@ -243,23 +223,12 @@ public class OrganisationController {
     @PreAuthorize("hasRole('ROOT') or hasRole('ADMIN')")
     @Transactional
     @Operation(summary = "Verify an organisation", description = "Update the organisation status to verified by the system administrator: the boolean variable verified is set to true")
-    public ResponseEntity<UpdatedOrganisationResponseDTO> verifyOrganisation(@PathVariable Long id) {
+    public ResponseEntity<Organisation> verifyOrganisation(@PathVariable Long id) {
         Organisation notVerifiedOrg = organisationService.getOrganisationById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organisation not found"));
         notVerifiedOrg.setVerified(true);
         Organisation verifiedOrg = organisationService.updateOrganisation(id, notVerifiedOrg);
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = null;
-        if (authentication != null) {
-            Object principal = authentication.getPrincipal();
-            if (principal instanceof User) {
-                user = (User) principal;
-            }
-        }
-        UpdatedOrganisationResponseDTO updatedOrganisationResponseDTO = new UpdatedOrganisationResponseDTO();
-        updatedOrganisationResponseDTO.setAdmin(user);
-        updatedOrganisationResponseDTO.setOrganisation(verifiedOrg);
-        return ResponseEntity.ok(updatedOrganisationResponseDTO);
+        return ResponseEntity.ok(verifiedOrg);
     }
 
     // Delete: protected
