@@ -31,9 +31,11 @@ import lombok.Data;
  * - Store `ownerId` and organisation members for role-based access control.
  */
 public class CreateOrganisationResponseDTO {
-	
-	@JsonProperty("owner_id")
-	private Long ownerId;
+
+    private Long id;
+
+    @JsonProperty("owner_id")
+    private Long ownerId;
 
     private String name;
 

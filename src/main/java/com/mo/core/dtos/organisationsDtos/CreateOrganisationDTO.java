@@ -31,9 +31,9 @@ import lombok.Data;
  * - Display membership policies (`publicJoin`, `requiresApproval`) in summary for transparency.
  */
 public class CreateOrganisationDTO {
-	
-	@JsonProperty("owner_id")
-	private Long ownerId;
+
+    @JsonProperty("owner_id")
+    private Long ownerId;
 
     private String name;
 
