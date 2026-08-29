@@ -32,6 +32,7 @@ import com.mo.core.model.organisations.OrganisationMember;
 import com.mo.core.services.OrganisationMembershipService;
 import com.mo.core.services.OrganisationService;
 import com.mo.core.services.QrCodeGeneratorService;
+import com.mo.core.enums.OrganisationVisibility;
 
 import io.jsonwebtoken.Claims;
 import jakarta.persistence.EntityNotFoundException;
@@ -151,38 +152,35 @@ public class OrganisationMemberController {
     
     // joindre une organisation public ou demander une adhesion à une org privée
     @PostMapping("/join")
-    @Operation(summary = "Join organisation", description = "Join an organisation using an invitation token")
-    public ResponseEntity<?> joinOrganisation(@RequestParam String token, @RequestAttribute("userId") Long userId) {
-        Claims claims;
+    @Operation(summary = "Join organisation", description = "Join an organisation either by invitation token (private) or by organisationId for public/protected orgs")
+    public ResponseEntity<?> joinOrganisation(
+            @RequestParam(required = false) String token,
+            @RequestParam(required = false) Long organisationId,
+            @RequestAttribute("userId") Long userId) {
 
-        try {
-            claims = jwtService.extractInvitationClaims(token); // méthode à créer dans ton JwtService
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired token.");
+        // If a token is provided, treat this as an invitation acceptance (used for PRIVATE orgs)
+        if (token != null && !token.isBlank()) {
+            try {
+                organisationService.acceptInvitationToken(token, userId);
+                return ResponseEntity.ok("Invitation acceptée. Vous avez rejoint l'organisation.");
+            } catch (IllegalArgumentException | EntityNotFoundException | IllegalStateException e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors du traitement de l'invitation.");
+            }
         }
 
-        // Vérifie le type
-        if (!"INVITATION".equals(claims.get("type"))) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token type.");
-        }
-
-        Long organisationId = ((Number) claims.get("organisationId")).longValue();
-        String invitedEmail = (String) claims.get("invitedEmail");
-        MemberType role = MemberType.valueOf((String) claims.get("role"));
-
-        // Vérifie la date d'émission
-        Date issuedAt = claims.getIssuedAt();
-        long ageInMillis = System.currentTimeMillis() - issuedAt.getTime();
-        long twoDaysInMillis = 2 * 24 * 60 * 60 * 1000;
-
-        if (ageInMillis > twoDaysInMillis) {
-            return ResponseEntity.status(HttpStatus.GONE).body("Invitation link has expired.");
+        // Otherwise require an organisationId to join public/protected orgs
+        if (organisationId == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Provide either an invitation token or organisationId.");
         }
 
         Organisation org = organisationService.findById(organisationId);
 
-        if (!org.isPublicJoin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Joining this organisation is not allowed via link.");
+        // Only PUBLIC organisations can be joined without an invitation.
+        // PROTECTED and PRIVATE require an invitation/token.
+        if (org.getVisibility() == OrganisationVisibility.PRIVATE || org.getVisibility() == OrganisationVisibility.PROTECTED) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Joining this organisation requires an invitation token.");
         }
 
         if (membershipService.isMember(userId, organisationId)) {
@@ -194,7 +192,8 @@ public class OrganisationMemberController {
             return ResponseEntity.ok("Join request submitted for approval.");
         }
 
-        membershipService.addMemberToOrganisation(organisationId, userId, role, Set.of());
+        // Directly add member for public or protected orgs (no token)
+        membershipService.addMemberToOrganisation(organisationId, userId, MemberType.FULL_MEMBER, Set.of());
         return ResponseEntity.ok("You have joined the organisation.");
     }
 
