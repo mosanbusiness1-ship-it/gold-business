@@ -11,6 +11,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -372,18 +373,46 @@ public class OrganisationController {
 
     @GetMapping("/{orgId}/products")
     @PreAuthorize("permitAll()")
-    @Operation(summary = "Get organisation products", description = "Return the list of products for the organisation using DTO mapping")
-    public ResponseEntity<List<Object>> getOrganisationProducts(
+    @Operation(summary = "Get organisation products", description = "Return the paginated list of products for the organisation using DTO mapping")
+    public ResponseEntity<?> getOrganisationProducts(
             @PathVariable Long orgId,
             @RequestParam(required = false) ProductType type,
-            @RequestParam(required = false) BigDecimal minPrice) {
-        
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+
+        if (page < 0) {
+            throw new IllegalArgumentException("Page index must be >= 0");
+        }
+        if (size <= 0) {
+            throw new IllegalArgumentException("Size must be > 0");
+        }
+
         ProductFilter filter = new ProductFilter(type, minPrice);
         List<AbstractProduct> products = organisationService.getProductsByOrganisation(orgId, filter);
-        List<com.fasterxml.jackson.databind.JsonNode> result = products.stream()
+
+        int fromIndex = page * size;
+        int toIndex = Math.min(fromIndex + size, products.size());
+
+        if (fromIndex >= products.size()) {
+            fromIndex = products.size();
+            toIndex = products.size();
+        }
+
+        List<AbstractProduct> pagedProducts = products.subList(fromIndex, toIndex);
+        List<JsonNode> result = pagedProducts.stream()
                 .map(mapperVisitor::mapToDto)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(new ArrayList<>(result));
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("organisationId", orgId);
+        response.put("page", page);
+        response.put("size", size);
+        response.put("totalElements", products.size());
+        response.put("totalPages", products.isEmpty() ? 0 : (int) Math.ceil((double) products.size() / size));
+        response.put("content", result);
+
+        return ResponseEntity.ok(response);
     }
 
     // SEARCH AND STATISTICS
@@ -884,6 +913,41 @@ public class OrganisationController {
         resp.put("organisationId", orgId);
         resp.put("savedNeedIds", savedNeeds.stream().map(AbstractUserNeed::getId).toList());
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+    }
+
+    @GetMapping("/{orgId}/needs")
+    @PreAuthorize("permitAll()")
+    @Operation(summary = "Get organisation needs",
+               description = "Retrieve paginated list of needs for the specified organisation",
+               responses = {@ApiResponse(responseCode = "200", description = "OK")})
+    public ResponseEntity<?> getOrganisationNeeds(
+            @PathVariable Long orgId,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+
+        try {
+            Organisation organisation = organisationService.getOrganisationById(orgId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organisation not found"));
+            
+            List<AbstractUserNeed> allNeeds = new ArrayList<>(organisation.getNeeds());
+            
+            // Manual pagination
+            int start = page * size;
+            int end = Math.min(start + size, allNeeds.size());
+            List<AbstractUserNeed> pageNeeds = allNeeds.subList(start, end);
+            
+            Map<String, Object> resp = new LinkedHashMap<>();
+            resp.put("organisationId", orgId);
+            resp.put("page", page);
+            resp.put("size", size);
+            resp.put("totalElements", allNeeds.size());
+            resp.put("totalPages", (int) Math.ceil((double) allNeeds.size() / size));
+            resp.put("content", pageNeeds.stream().map(needmapper::mapToDto).collect(Collectors.toList()));
+            
+            return ResponseEntity.ok(resp);
+        } catch (EntityNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        }
     }
 
     @PatchMapping("/{orgId}/products/{productId}/certify")
