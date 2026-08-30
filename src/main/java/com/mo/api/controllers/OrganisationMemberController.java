@@ -84,8 +84,13 @@ public class OrganisationMemberController {
     
     @GetMapping("/{orgId}/members")
     @Operation(summary = "Get organisation members", description = "Return the full member list for the organisation")
-    public ResponseEntity<List<User>> getMembers(@PathVariable Long orgId) {
-        return ResponseEntity.ok(membershipService.getOrganisationFullMembers(orgId));
+    public ResponseEntity<List<User>> getMembers(
+            @PathVariable Long orgId,
+            @RequestParam(required = false, defaultValue = "10") int limit) {
+        List<User> members = membershipService.getOrganisationFullMembers(orgId);
+        // Apply limit to the results
+        List<User> limitedMembers = members.stream().limit(limit).toList();
+        return ResponseEntity.ok(limitedMembers);
     }
     
     @GetMapping("/{userId}/community")
