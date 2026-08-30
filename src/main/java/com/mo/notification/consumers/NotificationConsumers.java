@@ -15,7 +15,7 @@ import com.mo.core.dtos.ProductForUserNotification;
 import com.mo.core.dtos.autoPurchase.AutoPurchaseNotificationDataDTO;
 import com.mo.core.dtos.autoPurchase.AutoPurchaseResponse;
 import com.mo.core.dtos.autoPurchase.ConfirmPendingTransferData;
-import com.mo.core.notification.services.NotificationService;
+import com.mo.notification.services.NotificationService;
 
 @Slf4j
 @Component
