@@ -2,6 +2,7 @@ package com.mo.notification.consumers;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -14,10 +15,11 @@ import com.mo.core.dtos.ProductForUserNotification;
 import com.mo.core.dtos.autoPurchase.AutoPurchaseNotificationDataDTO;
 import com.mo.core.dtos.autoPurchase.AutoPurchaseResponse;
 import com.mo.core.dtos.autoPurchase.ConfirmPendingTransferData;
-import com.mo.notification.services.NotificationService;
+import com.mo.core.notification.services.NotificationService;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "app.kafka", name = "enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 public class NotificationConsumers {
 

@@ -1,5 +1,6 @@
 package com.mo.core.events.listeners;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "app.kafka", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class ProductDeletionListener implements ApplicationListener<ProductDeletionEvent> {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;

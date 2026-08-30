@@ -18,6 +18,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
@@ -51,6 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "app.kafka", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class MessageConsumer {
 
 	@Autowired

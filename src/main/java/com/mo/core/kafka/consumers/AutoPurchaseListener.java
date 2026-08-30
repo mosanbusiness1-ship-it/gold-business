@@ -1,5 +1,6 @@
 package com.mo.core.kafka.consumers;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -9,6 +10,7 @@ import com.mo.core.dtos.autoPurchase.AutoPurchaseResponse;
 import com.mo.core.kafka.producers.MessageProducer;
 
 @Component
+@ConditionalOnProperty(prefix = "app.kafka", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class AutoPurchaseListener {
 
     private final ObjectMapper objectMapper;
