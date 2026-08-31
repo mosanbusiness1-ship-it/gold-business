@@ -14,17 +14,17 @@ public class GetOrganisationMemberResponseDTO {
     @JsonProperty("organisation_id")
     private String organisationId;
 
-    @JsonProperty("member_id")
-    private String memberId;
+    @JsonProperty("user_id")
+    private String userId;
     
-    @JsonProperty("member_full_name")
-    private String memberFullName;
+    @JsonProperty("full_name")
+    private String fullName;
 
-    @JsonProperty("member_email")
-    private String memberEmail;
+    @JsonProperty("email")
+    private String email;
 
     @JsonProperty("member_type")
-    private MemberType memberType;
+    private MemberType roles;
 
     
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mo.auth.User;
+import com.mo.core.dtos.GetOrganisationMemberResponseDTO;
 import com.mo.core.enums.MemberStatus;
 import com.mo.core.enums.MemberType;
 import com.mo.core.enums.OrganisationType;
@@ -71,12 +72,33 @@ public class OrganisationMembershipService {
             .map(OrganisationMember::getUser)
             .collect(Collectors.toList());
     }
-    
-    public List<User> getOrganisationFullMembers(Long orgId) {
+
+     public List<User> getOrganisationFullMembers(Long orgId) {
         return memberRepository.findByOrganisationIdAndType(orgId, MemberType.FULL_MEMBER)
             .stream()
             .map(OrganisationMember::getUser)
             .collect(Collectors.toList());
+    }
+    
+    public List<GetOrganisationMemberResponseDTO> getOrganisationMembers(Long orgId) {
+         List<OrganisationMember> orgMembers = memberRepository.findByOrganisationId(orgId);
+         orgMembers.forEach(orgMember -> {
+             GetOrganisationMemberResponseDTO dto = new GetOrganisationMemberResponseDTO();
+             dto.setOrganisationId(orgMember.getOrganisation().getId().toString());
+             dto.setUserId(orgMember.getUser().getId().toString());
+             dto.setFullName(orgMember.getUser().getFullName());
+             dto.setEmail(orgMember.getUser().getEmail());
+             dto.setRoles(orgMember.getType());
+         });
+        return orgMembers.stream()
+                .map(orgMember -> new GetOrganisationMemberResponseDTO(
+                    orgMember.getOrganisation().getId().toString(),
+                    orgMember.getUser().getId().toString(),
+                    orgMember.getUser().getFullName(),
+                    orgMember.getUser().getEmail(),
+                    orgMember.getType()
+                ))
+                .collect(Collectors.toList());
     }
     
     public List<Organisation> getUserCommunityOrganisation(Long userId, OrganisationType orgType) {
