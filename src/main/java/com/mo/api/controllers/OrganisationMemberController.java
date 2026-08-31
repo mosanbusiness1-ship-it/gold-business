@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import com.mo.auth.JwtService;
 import com.mo.auth.User;
 import com.mo.core.dtos.AddMemberRequest;
+import com.mo.core.dtos.GetOrganisationMemberResponseDTO;
 import com.mo.core.enums.MemberType;
 import com.mo.core.enums.OrganisationType;
 import com.mo.core.model.organisations.Organisation;
@@ -76,21 +77,27 @@ public class OrganisationMemberController {
     }
     
     
+    @GetMapping("/{orgId}/members/all")
+    @Operation(summary = "Get organisation members", description = "Return the full member list for the organisation")
+    public ResponseEntity<List<GetOrganisationMemberResponseDTO>> getMembers(
+            @PathVariable Long orgId,
+            @RequestParam(required = false, defaultValue = "10") int limit) {
+        List<GetOrganisationMemberResponseDTO> members = membershipService.getOrganisationMembers(orgId);
+        // Apply limit to the results
+        List<GetOrganisationMemberResponseDTO> limitedMembers = members.stream().limit(limit).toList();
+        return ResponseEntity.ok(limitedMembers);
+    }
+
     @GetMapping("/{orgId}/members/admins")
     @Operation(summary = "Get organisation admins", description = "Return all administrators for the organisation")
     public ResponseEntity<List<User>> getAdmins(@PathVariable Long orgId) {
         return ResponseEntity.ok(membershipService.getOrganisationAdmins(orgId));
     }
-    
-    @GetMapping("/{orgId}/members")
-    @Operation(summary = "Get organisation members", description = "Return the full member list for the organisation")
-    public ResponseEntity<List<User>> getMembers(
-            @PathVariable Long orgId,
-            @RequestParam(required = false, defaultValue = "10") int limit) {
-        List<User> members = membershipService.getOrganisationFullMembers(orgId);
-        // Apply limit to the results
-        List<User> limitedMembers = members.stream().limit(limit).toList();
-        return ResponseEntity.ok(limitedMembers);
+
+    @GetMapping("/{orgId}/members/full_members")
+    @Operation(summary = "Get organisation full members", description = "Return all full members for the organisation")
+    public ResponseEntity<List<User>> getfullMembers(@PathVariable Long orgId) {
+        return ResponseEntity.ok(membershipService.getOrganisationFullMembers(orgId));
     }
     
     @GetMapping("/{userId}/community")
