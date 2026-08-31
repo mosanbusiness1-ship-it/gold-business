@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.mo.core.dtos.GetOrganisationMemberResponseDTO;
 import com.mo.core.enums.MemberStatus;
 import com.mo.core.enums.MemberType;
 import com.mo.core.enums.OrganisationType;
@@ -25,6 +26,10 @@ public interface OrganisationMemberRepository extends JpaRepository<Organisation
     Optional<OrganisationMember> findByOrganisationIdAndUserId(Long orgId, Long userId);
 
     List<OrganisationMember> findByOrganisationIdAndType(Long orgId, MemberType type);
+
+    @Query("SELECT om FROM OrganisationMember om WHERE om.organisation.id = :orgId")
+    List<OrganisationMember> findByOrganisationId(@Param("orgId") Long orgId);
+
 
     List<OrganisationMember> findByUserIdAndType(Long userId, OrganisationType type);
 
