@@ -74,6 +74,7 @@ import com.mo.mappers.organisationMappers.OrgProductMapper;
 import com.mo.mappers.productsMappers.ProductMapperJackson;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.mo.core.dtos.userNeedsDTO.AbstractUserNeedDto;
 
@@ -240,6 +241,19 @@ public class OrganisationController {
         organisationService.deleteOrganisation(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{orgId}/isowner")
+    @Operation(summary = "Check if the authenticated user is the owner of the organization")
+    public ResponseEntity<Boolean> isOwner(
+        @PathVariable Long orgId, 
+        @AuthenticationPrincipal User user 
+    ) {
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // Gère le cas non connecté
+        }
+        return ResponseEntity.ok(organisationService.isOwner(user.getId(), orgId));
+    }
+
 
     // Hierarchy: protected
     @GetMapping("/{id}/hierarchy")
