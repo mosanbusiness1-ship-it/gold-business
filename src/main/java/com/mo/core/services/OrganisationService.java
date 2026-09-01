@@ -211,6 +211,10 @@ public class OrganisationService {
         return organisations;
     }
 
+    public boolean isOwner(Long userId, Long organisationId) {
+        return organisationRepository.existsByIdAndOwnerId(organisationId, userId);
+    }
+
     @Transactional(readOnly = true)
     public Page<Organisation> getVerifiedOrganisations(int page, int size) {
         log.info("getVerifiedOrganisations called: page={}, size={}", page, size);

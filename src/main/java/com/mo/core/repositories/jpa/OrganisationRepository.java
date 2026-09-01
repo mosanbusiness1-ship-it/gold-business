@@ -43,6 +43,8 @@ public interface OrganisationRepository extends JpaRepository<Organisation, Long
 
     // EXISTS METHODS
     boolean existsByName(String name);
+
+    boolean existsByIdAndOwnerId(Long id, Long ownerId);
     
     boolean existsByParentId(Long parentId);
 
