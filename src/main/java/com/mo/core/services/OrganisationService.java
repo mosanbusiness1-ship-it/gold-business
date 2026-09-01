@@ -34,6 +34,7 @@ import com.mo.core.model.organisations.Organisation;
 import com.mo.core.model.organisations.OrganisationProductReview;
 import com.mo.core.model.organisations.OrganisationReview;
 import com.mo.core.model.organisations.OrganisationMember;
+import com.mo.core.model.organisations.OrganisationMemberId;
 import com.mo.core.model.organisations.OrganisationProductMeta;
 import com.mo.core.model.organisations.OrganisationRatingSummary;
 import com.mo.core.model.organisations.GuaranteePolicy;
@@ -61,6 +62,7 @@ import com.mo.mappers.productsMappers.*;
 import com.mo.repositories.UserRepository;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -576,56 +578,75 @@ public class OrganisationService {
     
     
    public String generateInvitationToken(Long organisationId, Long currentUserId, String invitedEmail) {
-    String invitationToken = jwtService.generateInvitationToken(
-    	    organisationId,
-    	    currentUserId, // l'inviteur
-    	    invitedEmail,
-    	    MemberType.FULL_MEMBER, // ou "ADMIN", selon le rôle qu’on veut proposer
-    	    Duration.ofHours(48).toMillis() // durée de validité du lien
-    	);
-    return invitationToken ;
+       return generateInvitationToken(organisationId, currentUserId, invitedEmail, MemberType.FULL_MEMBER);
+   }
+
+   public String generateInvitationToken(Long organisationId, Long currentUserId, String invitedEmail, MemberType role) {
+       if (invitedEmail == null || invitedEmail.isBlank()) {
+           throw new IllegalArgumentException("L'email invité est requis.");
+       }
+       MemberType resolvedRole = role != null ? role : MemberType.FULL_MEMBER;
+       return jwtService.generateInvitationToken(organisationId, currentUserId, invitedEmail, resolvedRole);
    }
    
    public void acceptInvitationToken(String token, Long userId) {
-	   //@Value("${security.jwt.secret-key}")
-	  String jwtSecret = "3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b";
+       if (token == null || token.isBlank()) {
+           throw new IllegalArgumentException("Le token d'invitation est requis.");
+       }
 
-        try {
-        Claims claims = Jwts.parserBuilder()
-            .setSigningKey(Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8)))
-            .build()
-            .parseClaimsJws(token)
-            .getBody();
+       try {
+           Claims claims = jwtService.extractInvitationClaims(token);
+           Long organisationId = claims.get("organisationId", Long.class);
+           if (organisationId == null) {
+               throw new IllegalArgumentException("Token d'invitation invalide : organisationId manquant.");
+           }
 
-        Long organisationId = claims.get("organisationId", Long.class);
+           String invitedEmail = claims.get("email", String.class);
+           User user = userRepository.findById(userId)
+                   .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+           if (invitedEmail != null && !invitedEmail.isBlank() && !invitedEmail.equalsIgnoreCase(user.getEmail())) {
+               throw new IllegalArgumentException("Ce token n'est pas valide pour cet utilisateur.");
+           }
 
-	        // Vérifie si l'organisation existe
-	        Organisation organisation = organisationRepository.findById(organisationId)
-	                .orElseThrow(() -> new EntityNotFoundException("Organisation non trouvée"));
-	        // Vérifie si le membre existe déjà
-	        boolean alreadyMember = organisationMemberRepository
-	                .existsByOrganisationIdAndUserId(organisationId, userId);
+           String roleClaim = claims.get("role", String.class);
+           MemberType memberType = parseMemberType(roleClaim);
 
-	        if (alreadyMember) {
-	            throw new IllegalStateException("Vous êtes déjà membre de cette organisation.");
-	        }
+           Organisation organisation = organisationRepository.findById(organisationId)
+                   .orElseThrow(() -> new EntityNotFoundException("Organisation non trouvée"));
+           boolean alreadyMember = organisationMemberRepository.existsByOrganisationIdAndUserId(organisationId, userId);
+           if (alreadyMember) {
+               throw new IllegalStateException("Vous êtes déjà membre de cette organisation.");
+           }
 
-	        // Ajoute le nouveau membre
-	        OrganisationMember member = OrganisationMember.builder()
-	                .organisation(organisation)
-	                .user(userRepository.getReferenceById(userId))
-	                .status(MemberStatus.ACTIVE)
-	                .type(MemberType.FULL_MEMBER) // ou autre type par défaut
-	                .roles(Set.of("FULL_MEMBER")) // ou autre rôle
-	                .joinedAt(LocalDateTime.now())
-	                .build();
+           OrganisationMember member = OrganisationMember.builder()
+                   .id(new OrganisationMemberId(organisationId, userId))
+                   .organisation(organisation)
+                   .user(user)
+                   .status(MemberStatus.ACTIVE)
+                   .type(memberType)
+                   .roles(Set.of(memberType.name()))
+                   .joinedAt(LocalDateTime.now())
+                   .modifiedAt(LocalDateTime.now())
+                   .build();
 
-	        organisationMemberRepository.save(member);
+           organisationMemberRepository.save(member);
+       } catch (ExpiredJwtException e) {
+           throw new IllegalArgumentException("Le lien d'invitation a expiré.");
+       } catch (JwtException | IllegalArgumentException e) {
+           throw new IllegalArgumentException("Token d'invitation invalide ou corrompu.", e);
+       }
+   }
 
-	    } catch (ExpiredJwtException e) {
-	        throw new IllegalArgumentException("Le lien d'invitation a expiré.");
-	    }   
-	}
+   private MemberType parseMemberType(String rawRole) {
+       if (rawRole == null || rawRole.isBlank()) {
+           return MemberType.FULL_MEMBER;
+       }
+       try {
+           return MemberType.valueOf(rawRole.trim().toUpperCase());
+       } catch (IllegalArgumentException ex) {
+           return MemberType.FULL_MEMBER;
+       }
+   }
 
    public Organisation findById(Long organisationId) {
 	    return organisationRepository.findById(organisationId)

@@ -132,9 +132,16 @@ public class OrganisationMemberController {
     public ResponseEntity<String> generateInvitationLink(
             @PathVariable("orgId") Long organisationId,
             @RequestParam String email,
+            @RequestParam(required = false) String role,
             @RequestAttribute("userId") Long inviterUserId) {
 
-        String token = organisationService.generateInvitationToken(organisationId, inviterUserId, email);
+        MemberType memberType;
+        try {
+            memberType = role == null || role.isBlank() ? MemberType.FULL_MEMBER : MemberType.valueOf(role.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Rôle invalide. Valeurs autorisées : ADMIN, FULL_MEMBER, CONTRIBUTOR, GUEST, EXTERNAL, SELLER, BUYER.");
+        }
+        String token = organisationService.generateInvitationToken(organisationId, inviterUserId, email, memberType);
         String invitationLink = "https://tonapp.com/invitations/accept?token=" + token;
 
         return ResponseEntity.ok(invitationLink);
@@ -146,9 +153,16 @@ public class OrganisationMemberController {
     public ResponseEntity<Map<String, String>> generateInvitationQrCode(
             @PathVariable("orgId") Long organisationId,
             @RequestParam String email,
+            @RequestParam(required = false) String role,
             @RequestAttribute("userId") Long inviterUserId) throws Exception {
 
-        String token = organisationService.generateInvitationToken(organisationId, inviterUserId, email);
+        MemberType memberType;
+        try {
+            memberType = role == null || role.isBlank() ? MemberType.FULL_MEMBER : MemberType.valueOf(role.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Rôle invalide. Valeurs autorisées : ADMIN, FULL_MEMBER, CONTRIBUTOR, GUEST, EXTERNAL, SELLER, BUYER.");
+        }
+        String token = organisationService.generateInvitationToken(organisationId, inviterUserId, email, memberType);
         String invitationLink = "https://tonapp.com/invitations/accept?token=" + token;
 
         // Générer le QR code à partir du lien
