@@ -10,6 +10,7 @@ import java.util.Date;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -78,7 +79,7 @@ public class OrganisationMemberController {
     
     
     @GetMapping("/{orgId}/members/all")
-    @Operation(summary = "Get organisation members", description = "Return the full member list for the organisation")
+    @Operation(summary = "Get organisation members", description = "Return the member list for the organisation")
     public ResponseEntity<List<GetOrganisationMemberResponseDTO>> getMembers(
             @PathVariable Long orgId,
             @RequestParam(required = false, defaultValue = "10") int limit) {
@@ -87,6 +88,8 @@ public class OrganisationMemberController {
         List<GetOrganisationMemberResponseDTO> limitedMembers = members.stream().limit(limit).toList();
         return ResponseEntity.ok(limitedMembers);
     }
+
+    
 
     @GetMapping("/{orgId}/members/admins")
     @Operation(summary = "Get organisation admins", description = "Return all administrators for the organisation")
@@ -126,26 +129,7 @@ public class OrganisationMemberController {
     }
     
 
-    // genere le lien d'invitation
-    @PostMapping("/{orgId}/invite")
-    @Operation(summary = "Generate invitation link", description = "Generate an invitation link for a user to join the organisation")
-    public ResponseEntity<String> generateInvitationLink(
-            @PathVariable("orgId") Long organisationId,
-            @RequestParam String email,
-            @RequestParam(required = false) String role,
-            @RequestAttribute("userId") Long inviterUserId) {
-
-        MemberType memberType;
-        try {
-            memberType = role == null || role.isBlank() ? MemberType.FULL_MEMBER : MemberType.valueOf(role.trim().toUpperCase());
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Rôle invalide. Valeurs autorisées : ADMIN, FULL_MEMBER, CONTRIBUTOR, GUEST, EXTERNAL, SELLER, BUYER.");
-        }
-        String token = organisationService.generateInvitationToken(organisationId, inviterUserId, email, memberType);
-        String invitationLink = "https://tonapp.com/invitations/accept?token=" + token;
-
-        return ResponseEntity.ok(invitationLink);
-    }
+    
     
     
     @GetMapping("/{orgId}/invite/qr")
@@ -153,16 +137,9 @@ public class OrganisationMemberController {
     public ResponseEntity<Map<String, String>> generateInvitationQrCode(
             @PathVariable("orgId") Long organisationId,
             @RequestParam String email,
-            @RequestParam(required = false) String role,
             @RequestAttribute("userId") Long inviterUserId) throws Exception {
 
-        MemberType memberType;
-        try {
-            memberType = role == null || role.isBlank() ? MemberType.FULL_MEMBER : MemberType.valueOf(role.trim().toUpperCase());
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Rôle invalide. Valeurs autorisées : ADMIN, FULL_MEMBER, CONTRIBUTOR, GUEST, EXTERNAL, SELLER, BUYER.");
-        }
-        String token = organisationService.generateInvitationToken(organisationId, inviterUserId, email, memberType);
+        String token = organisationService.generateInvitationToken(organisationId, inviterUserId, email);
         String invitationLink = "https://tonapp.com/invitations/accept?token=" + token;
 
         // Générer le QR code à partir du lien

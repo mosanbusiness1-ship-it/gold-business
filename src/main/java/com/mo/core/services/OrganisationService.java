@@ -194,7 +194,23 @@ public class OrganisationService {
             throw new IllegalArgumentException("Parent organisation does not exist");
         }
         
-        return organisationRepository.save(organisation);
+        Organisation savedOrganisation = organisationRepository.save(organisation);
+        
+        // Ajouter automatiquement le propriétaire comme membre avec le rôle OWNER
+        OrganisationMemberId memberId = new OrganisationMemberId(savedOrganisation.getId(), owner.getId());
+        OrganisationMember ownerMember = OrganisationMember.builder()
+            .id(memberId)
+            .organisation(savedOrganisation)
+            .user(owner)
+            .type(MemberType.OWNER)
+            .roles(java.util.Collections.emptySet())
+            .status(MemberStatus.ACTIVE)
+            .joinedAt(LocalDateTime.now())
+            .modifiedAt(LocalDateTime.now())
+            .build();
+        organisationMemberRepository.save(ownerMember);
+        
+        return savedOrganisation;
     }
     
     public Organisation save(Organisation organisation) {
