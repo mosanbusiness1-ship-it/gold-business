@@ -129,7 +129,24 @@ public class OrganisationMemberController {
     }
     
 
-    
+    @PostMapping("/{orgId}/invite")
+    @Operation(summary = "Generate organisation invitation", description = "Generate a signed invitation link for a user to join an organisation with an optional role")
+    public ResponseEntity<Map<String, String>> generateOrganisationInvitation(
+            @PathVariable Long orgId,
+            @RequestParam String email,
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) String role) {
+        MemberType memberType;
+        
+        try {
+            memberType = role == null || role.isBlank() ? MemberType.FULL_MEMBER : MemberType.valueOf(role.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Rôle invalide. Valeurs autorisées : ADMIN, FULL_MEMBER, CONTRIBUTOR, GUEST, EXTERNAL, SELLER, BUYER.");
+        }
+        String token = organisationService.generateInvitationToken(orgId, user.getId(), email, memberType);
+        String invitationLink = "https://gold-business-api.onrender.com/invitations/accept?token=" + token;
+        return ResponseEntity.ok(Map.of("token", token, "invitationLink", invitationLink));
+    }
     
     
     @GetMapping("/{orgId}/invite/qr")
@@ -140,7 +157,7 @@ public class OrganisationMemberController {
             @RequestAttribute("userId") Long inviterUserId) throws Exception {
 
         String token = organisationService.generateInvitationToken(organisationId, inviterUserId, email);
-        String invitationLink = "https://tonapp.com/invitations/accept?token=" + token;
+        String invitationLink = "https://gold-business-api.onrender.com/invitations/accept?token=" + token;
 
         // Générer le QR code à partir du lien
         byte[] qrCodeBytes = qrCodeGeneratorService.generateQrCode(invitationLink, 300, 300);
