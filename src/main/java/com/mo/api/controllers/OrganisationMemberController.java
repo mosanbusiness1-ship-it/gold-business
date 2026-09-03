@@ -143,7 +143,7 @@ public class OrganisationMemberController {
             throw new IllegalArgumentException("Rôle invalide. Valeurs autorisées : ADMIN, FULL_MEMBER, CONTRIBUTOR, GUEST, EXTERNAL, SELLER, BUYER.");
         }
         String token = organisationService.generateInvitationToken(orgId, user.getId(), email, memberType);
-        String invitationLink = "http://lacalhost/3000/invitations/accept?token=" + token;
+        String invitationLink = "http://localhost:3000/invitations/accept?token=" + token;
         return ResponseEntity.ok(Map.of("token", token, "invitationLink", invitationLink));
     }
     
@@ -156,7 +156,7 @@ public class OrganisationMemberController {
             @AuthenticationPrincipal User user) throws Exception {
 
         String token = organisationService.generateInvitationToken(organisationId, user.getId(), email);
-        String invitationLink = "http://localhost/3000/invitations/accept?token=" + token;
+        String invitationLink = "http://localhost:3000/invitations/accept?token=" + token;
 
         // Générer le QR code à partir du lien
         byte[] qrCodeBytes = qrCodeGeneratorService.generateQrCode(invitationLink, 300, 300);
