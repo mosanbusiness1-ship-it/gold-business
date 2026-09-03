@@ -48,8 +48,7 @@ public class OrganisationMemberController {
     private final OrganisationMembershipService membershipService;
     private final OrganisationService organisationService;
     private final QrCodeGeneratorService qrCodeGeneratorService;
-    private JwtService jwtService;
-
+    
     @PostMapping("/{orgId}/members")
     @Operation(summary = "Add organisation member", description = "Add a user to the organisation with the requested member type and roles")
     public ResponseEntity<OrganisationMember> addMember(
@@ -144,7 +143,7 @@ public class OrganisationMemberController {
             throw new IllegalArgumentException("Rôle invalide. Valeurs autorisées : ADMIN, FULL_MEMBER, CONTRIBUTOR, GUEST, EXTERNAL, SELLER, BUYER.");
         }
         String token = organisationService.generateInvitationToken(orgId, user.getId(), email, memberType);
-        String invitationLink = "https://gold-business-api.onrender.com/invitations/accept?token=" + token;
+        String invitationLink = "http://lacalhost/3000/invitations/accept?token=" + token;
         return ResponseEntity.ok(Map.of("token", token, "invitationLink", invitationLink));
     }
     
@@ -154,10 +153,10 @@ public class OrganisationMemberController {
     public ResponseEntity<Map<String, String>> generateInvitationQrCode(
             @PathVariable("orgId") Long organisationId,
             @RequestParam String email,
-            @RequestAttribute("userId") Long inviterUserId) throws Exception {
+            @AuthenticationPrincipal User user) throws Exception {
 
-        String token = organisationService.generateInvitationToken(organisationId, inviterUserId, email);
-        String invitationLink = "https://gold-business-api.onrender.com/invitations/accept?token=" + token;
+        String token = organisationService.generateInvitationToken(organisationId, user.getId(), email);
+        String invitationLink = "http://localhost/3000/invitations/accept?token=" + token;
 
         // Générer le QR code à partir du lien
         byte[] qrCodeBytes = qrCodeGeneratorService.generateQrCode(invitationLink, 300, 300);
@@ -176,12 +175,12 @@ public class OrganisationMemberController {
     public ResponseEntity<?> joinOrganisation(
             @RequestParam(required = false) String token,
             @RequestParam(required = false) Long organisationId,
-            @RequestAttribute("userId") Long userId) {
+            @AuthenticationPrincipal User user) {
 
         // If a token is provided, treat this as an invitation acceptance (used for PRIVATE orgs)
         if (token != null && !token.isBlank()) {
             try {
-                organisationService.acceptInvitationToken(token, userId);
+                organisationService.acceptInvitationToken(token, user.getId());
                 return ResponseEntity.ok("Invitation acceptée. Vous avez rejoint l'organisation.");
             } catch (IllegalArgumentException | EntityNotFoundException | IllegalStateException e) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -203,17 +202,17 @@ public class OrganisationMemberController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Joining this organisation requires an invitation token.");
         }
 
-        if (membershipService.isMember(userId, organisationId)) {
+        if (membershipService.isMember(user.getId(), organisationId)) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Already a member.");
         }
 
         if (org.isRequiresApproval()) {
-            membershipService.createPendingRequest(userId, organisationId);
+            membershipService.createPendingRequest(user.getId(), organisationId);
             return ResponseEntity.ok("Join request submitted for approval.");
         }
 
         // Directly add member for public or protected orgs (no token)
-        membershipService.addMemberToOrganisation(organisationId, userId, MemberType.FULL_MEMBER, Set.of());
+        membershipService.addMemberToOrganisation(organisationId, user.getId(), MemberType.FULL_MEMBER, Set.of());
         return ResponseEntity.ok("You have joined the organisation.");
     }
 
@@ -242,16 +241,16 @@ public class OrganisationMemberController {
     // accepter une invitation consiste à integrer l'organisation directement sans besoin d'aprobation
     @PostMapping("/accept-invitation")
     @Operation(summary = "Accept invitation", description = "Accept an invitation token and join the organisation")
-    public ResponseEntity<?> acceptInvitation(@RequestParam String token, @RequestAttribute("userId") Long userId) {
-        organisationService.acceptInvitationToken(token, userId);
+    public ResponseEntity<?> acceptInvitation(@RequestParam String token, @AuthenticationPrincipal User user) {
+        organisationService.acceptInvitationToken(token, user.getId());
         return ResponseEntity.ok("Invitation acceptée. Vous avez rejoint l'organisation.");
     }
 
     // rejeter une demande d'adhésion
     @PostMapping("/memberships/{membershipId}/reject")
     @Operation(summary = "Reject membership request", description = "Reject a pending membership request for an organisation")
-    public ResponseEntity<?> rejectMembershipRequest(@PathVariable Long membershipId, @RequestAttribute("userId") Long approverId) {
-        membershipService.rejectRequest(membershipId, approverId);
+    public ResponseEntity<?> rejectMembershipRequest(@PathVariable Long membershipId, @AuthenticationPrincipal User user) {
+        membershipService.rejectRequest(membershipId, user.getId());
         return ResponseEntity.ok("Demande d'adhésion rejetée.");
     }
 

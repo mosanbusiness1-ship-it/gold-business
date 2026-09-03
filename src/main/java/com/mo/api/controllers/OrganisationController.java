@@ -342,14 +342,14 @@ public class OrganisationController {
             @PathVariable Long orgId,
             @PathVariable Long productId,
             @RequestBody @Valid OrganisationProductScoreRequest request,
-            @RequestAttribute("userId") Long moderatorId) {
+            @AuthenticationPrincipal User user) {
 
         var review = organisationService.assignOrganisationProductScore(
             orgId,
             productId,
             request.getScore(),
             request.getComment(),
-            moderatorId
+            user.getId()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(review);
@@ -483,12 +483,12 @@ public class OrganisationController {
     public ResponseEntity<?> addReview(
             @PathVariable Long orgId,
             @RequestBody com.mo.core.dtos.organisationsDtos.OrganisationReviewRequest request,
-            @RequestAttribute("userId") Long userId) {
+            @AuthenticationPrincipal User user) {
         
         try {
             var review = organisationService.addOrganisationReview(
                 orgId,
-                userId,
+                user.getId(),
                 request.getRating(),
                 request.getTitle(),
                 request.getComment(),
@@ -590,12 +590,12 @@ public class OrganisationController {
             @PathVariable Long orgId,
             @PathVariable Long productId,
             @RequestBody @Valid ProductValidationRequestDTO request,
-            @RequestAttribute("userId") Long moderatorId) {
+            @AuthenticationPrincipal User user) {
 
         try {
             boolean approved = Boolean.TRUE.equals(request.getApproved());
             String comments = request.getComments();
-            organisationService.validateProduct(orgId, productId, approved, comments, moderatorId);
+            organisationService.validateProduct(orgId, productId, approved, comments, user.getId());
             return ResponseEntity.ok(Map.of("message", "Validation applied"));
         } catch (EntityNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
@@ -764,9 +764,9 @@ public class OrganisationController {
     public ResponseEntity<?> releaseEscrow(
             @PathVariable Long orgId,
             @PathVariable Long escrowId,
-            @RequestAttribute("userId") Long moderatorId) {
+            @AuthenticationPrincipal User user) {
         try {
-            var escrow = organisationService.releaseEscrow(escrowId, moderatorId);
+            var escrow = organisationService.releaseEscrow(escrowId, user.getId());
             return ResponseEntity.ok(escrow);
         } catch (EntityNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
