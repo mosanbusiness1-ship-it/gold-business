@@ -24,7 +24,7 @@ COPY --from=build /app/target/gold-business-0.0.1-SNAPSHOT.jar /app/app.jar
 
 ARG AUTO_UPDATE_DATABASE=true
 ENV AUTO_UPDATE_DATABASE=${AUTO_UPDATE_DATABASE}
-ENV APP_KAFKA_ENABLED=false
+ENV APP_KAFKA_ENABLED=true
 EXPOSE 8080
 
 # Safe default: no schema mutation unless explicitly enabled in Docker/Render.

@@ -117,24 +117,6 @@ public class OrganisationController {
     
     private static final Logger log = LoggerFactory.getLogger(OrganisationController.class);
     
-    @PostMapping("/{orgId}/invite")
-    @Operation(summary = "Generate organisation invitation", description = "Generate a signed invitation link for a user to join an organisation with an optional role")
-    public ResponseEntity<Map<String, String>> generateOrganisationInvitation(
-            @PathVariable Long orgId,
-            @RequestParam String email,
-            @RequestParam(required = false) String role,
-            @RequestAttribute("userId") Long inviterUserId) {
-        MemberType memberType;
-        try {
-            memberType = role == null || role.isBlank() ? MemberType.FULL_MEMBER : MemberType.valueOf(role.trim().toUpperCase());
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Rôle invalide. Valeurs autorisées : ADMIN, FULL_MEMBER, CONTRIBUTOR, GUEST, EXTERNAL, SELLER, BUYER.");
-        }
-        String token = organisationService.generateInvitationToken(orgId, inviterUserId, email, memberType);
-        String invitationLink = "https://tonapp.com/invitations/accept?token=" + token;
-        return ResponseEntity.ok(Map.of("token", token, "invitationLink", invitationLink));
-    }
-
     // Creation endpoint accessible (default)
     @PostMapping
     @Operation(
