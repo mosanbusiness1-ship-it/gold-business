@@ -102,6 +102,7 @@ public class OrganisationMembershipService {
         return orgMembers.stream()
                 .map(orgMember -> new GetOrganisationMemberResponseDTO(
                     orgMember.getOrganisation().getId().toString(),
+                    orgMember.getOrganisation().getName(),
                     orgMember.getUser().getId().toString(),
                     orgMember.getUser().getFullName(),
                     orgMember.getUser().getEmail(),
