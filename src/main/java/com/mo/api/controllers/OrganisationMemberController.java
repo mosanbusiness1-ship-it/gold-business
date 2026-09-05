@@ -28,6 +28,7 @@ import com.mo.auth.JwtService;
 import com.mo.auth.User;
 import com.mo.core.dtos.AddMemberRequest;
 import com.mo.core.dtos.GetOrganisationMemberResponseDTO;
+import com.mo.core.dtos.OrganisationInvitationDTO;
 import com.mo.core.enums.MemberType;
 import com.mo.core.enums.OrganisationType;
 import com.mo.core.model.organisations.Organisation;
@@ -273,8 +274,24 @@ public class OrganisationMemberController {
         return ResponseEntity.ok("Demande d'adhésion rejetée.");
     }
 
+    @GetMapping("/{orgId}/invitations")
+    @PreAuthorize("@organisationSecurity.isAdminOfOrganisation(authentication, #orgId)")
+    @Operation(summary = "List organisation invitations", description = "Return all invitations sent for an organisation")
+    public ResponseEntity<List<OrganisationInvitationDTO>> getOrganisationInvitations(@PathVariable Long orgId) {
+        return ResponseEntity.ok(organisationService.getOrganisationInvitations(orgId));
+    }
 
-    
-
-
+    @DeleteMapping("/{orgId}/invitations/{invitationId}")
+    @PreAuthorize("@organisationSecurity.isAdminOfOrganisation(authentication, #orgId)")
+    @Operation(summary = "Revoke invitation", description = "Revoke a pending invitation for an organisation")
+    public ResponseEntity<?> revokeInvitation(@PathVariable Long orgId, @PathVariable Long invitationId) {
+        try {
+            organisationService.revokeInvitation(orgId, invitationId);
+            return ResponseEntity.ok("Invitation révoquée.");
+        } catch (EntityNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
 }

@@ -26,6 +26,7 @@ import com.mo.core.enums.MemberStatus;
 import com.mo.core.enums.MemberType;
 import com.mo.core.enums.OrganisationStatus;
 import com.mo.core.enums.CommissionMode;
+import com.mo.core.enums.InvitationStatus;
 import com.mo.core.enums.ProductApprovalStatus;
 import com.mo.core.enums.OrganisationReviewStatus;
 import com.mo.core.exceptions.OrganisationNotFoundException;
@@ -35,6 +36,7 @@ import com.mo.core.model.organisations.OrganisationProductReview;
 import com.mo.core.model.organisations.OrganisationReview;
 import com.mo.core.model.organisations.OrganisationMember;
 import com.mo.core.model.organisations.OrganisationMemberId;
+import com.mo.core.model.organisations.OrganisationInvitation;
 import com.mo.core.model.organisations.OrganisationProductMeta;
 import com.mo.core.model.organisations.OrganisationRatingSummary;
 import com.mo.core.model.organisations.GuaranteePolicy;
@@ -53,6 +55,7 @@ import com.mo.core.repositories.jpa.OrganisationProductMetaRepository;
 import com.mo.core.repositories.jpa.OrganisationRatingSummaryRepository;
 import com.mo.core.repositories.jpa.OrganisationReviewRepository;
 import com.mo.core.repositories.jpa.GuaranteePolicyRepository;
+import com.mo.core.repositories.jpa.OrganisationInvitationRepository;
 import com.mo.core.repositories.jpa.CommissionTransactionRepository;
 import com.mo.core.repositories.jpa.ProductRepository;
 import com.mo.core.kafka.OrganisationValidationProducer;
@@ -92,7 +95,8 @@ public class OrganisationService {
     private final OrganisationRatingSummaryRepository ratingSummaryRepository;
     private final OrganisationReviewRepository organisationReviewRepository;
     private final GuaranteePolicyRepository guaranteePolicyRepository;
-        private final com.mo.core.repositories.jpa.GuaranteeClaimRepository guaranteeClaimRepository;
+    private final OrganisationInvitationRepository invitationRepository;
+    private final com.mo.core.repositories.jpa.GuaranteeClaimRepository guaranteeClaimRepository;
     private final CommissionTransactionRepository commissionTransactionRepository;
     private final com.mo.core.repositories.jpa.EscrowTransactionRepository escrowTransactionRepository;
     private final UserRepository userRepository;
@@ -127,6 +131,7 @@ public class OrganisationService {
                              OrganisationRatingSummaryRepository ratingSummaryRepository,
                              OrganisationReviewRepository organisationReviewRepository,
                              GuaranteePolicyRepository guaranteePolicyRepository,
+                             OrganisationInvitationRepository invitationRepository,
                              CommissionTransactionRepository commissionTransactionRepository,
                              OrganisationValidationProducer validationProducer,
                              com.mo.core.kafka.PaymentProducer paymentProducer,
@@ -139,6 +144,7 @@ public class OrganisationService {
         this.ratingSummaryRepository = ratingSummaryRepository;
         this.organisationReviewRepository = organisationReviewRepository;
         this.guaranteePolicyRepository = guaranteePolicyRepository;
+        this.invitationRepository = invitationRepository;
         this.guaranteeClaimRepository = guaranteeClaimRepository;
         this.commissionTransactionRepository = commissionTransactionRepository;
         this.userRepository = userRepository;
@@ -179,7 +185,7 @@ public class OrganisationService {
                               CommissionTransactionRepository commissionTransactionRepository,
                               OrganisationValidationProducer validationProducer,
                               com.mo.core.repositories.jpa.EscrowTransactionRepository escrowTransactionRepository) {
-        this(organisationRepository, userRepository, productRepository, organisationMapper, electronicMapper, fashionMapper, vehicleMapper, foodProductMapper, realEstateMapper, serviceMapper, jwtService, organisationMemberRepository, productReviewRepository, productMetaRepository, ratingSummaryRepository, organisationReviewRepository, guaranteePolicyRepository, commissionTransactionRepository, validationProducer, null, null, escrowTransactionRepository);
+        this(organisationRepository, userRepository, productRepository, organisationMapper, electronicMapper, fashionMapper, vehicleMapper, foodProductMapper, realEstateMapper, serviceMapper, jwtService, organisationMemberRepository, productReviewRepository, productMetaRepository, ratingSummaryRepository, organisationReviewRepository, guaranteePolicyRepository, null, commissionTransactionRepository, validationProducer, null, null, escrowTransactionRepository);
     }
 
         // Use the injected OrganisationMapper instance
@@ -602,7 +608,29 @@ public class OrganisationService {
            throw new IllegalArgumentException("L'email invité est requis.");
        }
        MemberType resolvedRole = role != null ? role : MemberType.FULL_MEMBER;
-       return jwtService.generateInvitationToken(organisationId, currentUserId, invitedEmail, resolvedRole);
+       String token = jwtService.generateInvitationToken(organisationId, currentUserId, invitedEmail, resolvedRole);
+       
+       // Enregistrer l'invitation en base de données
+       Organisation organisation = organisationRepository.findById(organisationId)
+           .orElseThrow(() -> new EntityNotFoundException("Organisation not found"));
+       User inviter = userRepository.findById(currentUserId)
+           .orElseThrow(() -> new EntityNotFoundException("User not found"));
+       
+       LocalDateTime expiresAt = LocalDateTime.now().plus(Duration.ofDays(7)); // 7 jours par défaut
+       
+       OrganisationInvitation invitation = OrganisationInvitation.builder()
+           .organisation(organisation)
+           .inviter(inviter)
+           .invitedEmail(invitedEmail)
+           .role(resolvedRole)
+           .token(token)
+           .expiresAt(expiresAt)
+           .status(InvitationStatus.PENDING)
+           .build();
+       
+       invitationRepository.save(invitation);
+       
+       return token;
    }
    
    public void acceptInvitationToken(String token, Long userId) {
@@ -646,6 +674,13 @@ public class OrganisationService {
                    .build();
 
            organisationMemberRepository.save(member);
+           
+           // Mettre à jour le statut de l'invitation en ACCEPTED
+           OrganisationInvitation invitation = invitationRepository.findByToken(token)
+               .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
+           invitation.setStatus(InvitationStatus.ACCEPTED);
+           invitation.setAcceptedAt(LocalDateTime.now());
+           invitationRepository.save(invitation);
        } catch (ExpiredJwtException e) {
            throw new IllegalArgumentException("Le lien d'invitation a expiré.");
        } catch (JwtException | IllegalArgumentException e) {
@@ -1215,4 +1250,53 @@ public class OrganisationService {
 	    product.setCertified(certified);
 	    return productRepository.save(product);
 	}
+
+	public List<com.mo.core.dtos.OrganisationInvitationDTO> getOrganisationInvitations(Long organisationId) {
+       Organisation organisation = organisationRepository.findById(organisationId)
+           .orElseThrow(() -> new EntityNotFoundException("Organisation not found"));
+
+       return invitationRepository.findByOrganisationIdOrderBySentAtDesc(organisation.getId())
+           .stream()
+           .map(this::toInvitationDto)
+           .toList();
+   }
+
+   @Transactional
+   public void revokeInvitation(Long organisationId, Long invitationId) {
+       OrganisationInvitation invitation = invitationRepository.findById(invitationId)
+           .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
+
+       if (!organisationId.equals(invitation.getOrganisation().getId())) {
+           throw new IllegalArgumentException("Cette invitation n'appartient pas à cette organisation.");
+       }
+
+       if (invitation.getStatus() == InvitationStatus.ACCEPTED
+           || invitation.getStatus() == InvitationStatus.REVOKED
+           || invitation.getStatus() == InvitationStatus.EXPIRED) {
+           throw new IllegalStateException("Cette invitation ne peut plus être révoquée.");
+       }
+
+       invitation.setStatus(InvitationStatus.REVOKED);
+       invitation.setRevokedAt(LocalDateTime.now());
+       invitationRepository.save(invitation);
+   }
+
+   private com.mo.core.dtos.OrganisationInvitationDTO toInvitationDto(OrganisationInvitation invitation) {
+       String invitationLink = "http://localhost:3000/invitations/accept?token=" + invitation.getToken();
+
+       return com.mo.core.dtos.OrganisationInvitationDTO.builder()
+           .id(invitation.getId())
+           .organisationId(invitation.getOrganisation().getId())
+           .inviterId(invitation.getInviter().getId())
+           .invitedEmail(invitation.getInvitedEmail())
+           .role(invitation.getRole())
+           .token(invitation.getToken())
+           .invitationLink(invitationLink)
+           .sentAt(invitation.getSentAt())
+           .expiresAt(invitation.getExpiresAt())
+           .acceptedAt(invitation.getAcceptedAt())
+           .revokedAt(invitation.getRevokedAt())
+           .status(invitation.getStatus())
+           .build();
+   }
 }
