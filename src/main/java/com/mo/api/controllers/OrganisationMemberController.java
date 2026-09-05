@@ -29,6 +29,7 @@ import com.mo.auth.User;
 import com.mo.core.dtos.AddMemberRequest;
 import com.mo.core.dtos.GetOrganisationMemberResponseDTO;
 import com.mo.core.dtos.OrganisationInvitationDTO;
+import com.mo.core.dtos.UserOrganisationMembershipDTO;
 import com.mo.core.enums.MemberType;
 import com.mo.core.enums.OrganisationType;
 import com.mo.core.model.organisations.Organisation;
@@ -104,10 +105,16 @@ public class OrganisationMemberController {
         return ResponseEntity.ok(membershipService.getOrganisationFullMembers(orgId));
     }
     
+    @GetMapping("/me/organisations")
+    @Operation(summary = "Get my organisations", description = "Return the organisations of the connected user with their member type")
+    public ResponseEntity<List<UserOrganisationMembershipDTO>> getMyOrganisations(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(membershipService.getUserOrganisationsWithMemberType(user.getId()));
+    }
+
     @GetMapping("/{userId}/community")
     @Operation(summary = "Get user community organisations", description = "Return sales community organisations for the given user")
     public ResponseEntity<List<Organisation>> getUserCommunity(@PathVariable Long userId) {
-        return ResponseEntity.ok(membershipService.getUserGroupOrganisation(userId, OrganisationType.COMMUNITY));
+        return ResponseEntity.ok(membershipService.getUserCommunityOrganisation(userId, OrganisationType.COMMUNITY));
     }
     
     @GetMapping("/{userId}/group")

@@ -31,20 +31,16 @@ public interface OrganisationMemberRepository extends JpaRepository<Organisation
     List<OrganisationMember> findByOrganisationId(@Param("orgId") Long orgId);
 
 
-    List<OrganisationMember> findByUserIdAndType(Long userId, OrganisationType type);
+    @Query("SELECT om FROM OrganisationMember om WHERE om.user.id = :userId AND om.organisation.type = :orgType AND om.status = :status")
+    List<OrganisationMember> findByUserIdAndOrganisationTypeAndStatus(
+        @Param("userId") Long userId,
+        @Param("orgType") OrganisationType orgType,
+        @Param("status") MemberStatus status
+    );
 
-//    @Query("SELECT om FROM OrganisationMember om WHERE om.organisation.id = :orgId AND :role MEMBER OF om.roles")
-//    List<OrganisationMember> findByOrganisationAndRole(@Param("orgId") Long orgId, @Param("role") String role);
-//
-//    boolean existsByOrganisationIdAndUserId(Long organisationId, Long userId);
-//
-//    boolean existsByOrganisationIdAndUserIdAndStatus(Long organisationId, Long userId, MemberStatus status);
-//    
-//    Optional<OrganisationMember> findByOrganisationIdAndUserIdAndStatus(Long organisationId, Long userId, MemberStatus status);
-//
-//	boolean existsByUserIdAndOrganisationIdAndRoles(Long userId, Long organisationId, Set<String> roles);
-    @Query("SELECT om FROM OrganisationMember om WHERE om.organisation.id = :orgId AND :role MEMBER OF om.roles")
-    List<OrganisationMember> findByOrganisationAndRole(@Param("orgId") Long orgId, @Param("role") String role);
+    List<OrganisationMember> findByUserId(Long userId);
+
+    List<OrganisationMember> findByUserIdAndStatus(Long userId, MemberStatus status);
 
     boolean existsByOrganisationIdAndUserId(Long organisationId, Long userId);
 

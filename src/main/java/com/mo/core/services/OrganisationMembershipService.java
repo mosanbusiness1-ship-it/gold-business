@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.mo.auth.User;
 import com.mo.core.dtos.GetOrganisationMemberResponseDTO;
+import com.mo.core.dtos.UserOrganisationMembershipDTO;
 import com.mo.core.enums.MemberStatus;
 import com.mo.core.enums.MemberType;
 import com.mo.core.enums.OrganisationType;
@@ -110,19 +111,31 @@ public class OrganisationMembershipService {
     }
     
     public List<Organisation> getUserCommunityOrganisation(Long userId, OrganisationType orgType) {
-        return memberRepository.findByUserIdAndType(userId, OrganisationType.COMMUNITY)
+        return memberRepository.findByUserIdAndOrganisationTypeAndStatus(userId, orgType, MemberStatus.ACTIVE)
             .stream()
             .map(OrganisationMember::getOrganisation)
             .collect(Collectors.toList());
     }
     
     public List<Organisation> getUserGroupOrganisation(Long userId, OrganisationType orgType) {
-        return memberRepository.findByUserIdAndType(userId, OrganisationType.GROUP)
+        return memberRepository.findByUserIdAndOrganisationTypeAndStatus(userId, orgType, MemberStatus.ACTIVE)
             .stream()
             .map(OrganisationMember::getOrganisation)
             .collect(Collectors.toList());
     }
-    
+
+    public List<UserOrganisationMembershipDTO> getUserOrganisationsWithMemberType(Long userId) {
+        return memberRepository.findByUserIdAndStatus(userId, MemberStatus.ACTIVE)
+            .stream()
+            .map(membership -> UserOrganisationMembershipDTO.builder()
+                .organisationId(membership.getOrganisation().getId())
+                .organisationName(membership.getOrganisation().getName())
+                .organisationType(membership.getOrganisation().getType())
+                .memberType(membership.getType())
+                .build())
+            .collect(Collectors.toList());
+    }
+
     public MemberType getMemberType(Long userId, Long organisationId) {
         return memberRepository.findByOrganisationIdAndUserId(organisationId, userId)
             .map(OrganisationMember::getType)
