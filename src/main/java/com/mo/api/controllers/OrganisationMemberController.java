@@ -127,6 +127,24 @@ public class OrganisationMemberController {
         return ResponseEntity.noContent().build();
     }
     
+    /**
+     * DELETE /api/orgmembers/{orgId}/members/{userId} - Remove a member from the organisation
+     */
+    @DeleteMapping("/{orgId}/members/{userId}")
+    @PreAuthorize("@organisationSecurity.isAdminOfOrganisation(authentication, #orgId)")
+    @Operation(summary = "Remove member", description = "Remove a member from the organisation (admin/owner only)")
+    public ResponseEntity<?> removeMember(
+            @PathVariable Long orgId,
+            @PathVariable Long userId) {
+        try {
+            membershipService.removeMember(orgId, userId);
+            return ResponseEntity.ok("Membre supprimé de l'organisation.");
+        } catch (EntityNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
 
     @PostMapping("/{orgId}/invite")
     @Operation(summary = "Generate organisation invitation", description = "Generate a signed invitation link for a user to join an organisation with an optional role")

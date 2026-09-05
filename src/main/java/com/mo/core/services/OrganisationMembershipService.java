@@ -66,6 +66,14 @@ public class OrganisationMembershipService {
         return memberRepository.save(membership);
     }
 
+    @Transactional
+    public void removeMember(Long orgId, Long userId) {
+        OrganisationMember membership = memberRepository.findByOrganisationIdAndUserId(orgId, userId)
+            .orElseThrow(() -> new EntityNotFoundException("Membership not found for user " + userId + " in organisation " + orgId));
+        
+        memberRepository.delete(membership);
+    }
+
     public List<User> getOrganisationAdmins(Long orgId) {
         return memberRepository.findByOrganisationIdAndType(orgId, MemberType.ADMIN)
             .stream()
