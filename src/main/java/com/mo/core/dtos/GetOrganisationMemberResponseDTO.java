@@ -14,6 +14,9 @@ public class GetOrganisationMemberResponseDTO {
     @JsonProperty("organisation_id")
     private String organisationId;
 
+    @JsonProperty("organisation_name")
+    private String organisationName;
+
     @JsonProperty("user_id")
     private String userId;
     

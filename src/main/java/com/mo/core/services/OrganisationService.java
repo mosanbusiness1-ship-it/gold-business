@@ -1297,6 +1297,8 @@ public class OrganisationService {
            .acceptedAt(invitation.getAcceptedAt())
            .revokedAt(invitation.getRevokedAt())
            .status(invitation.getStatus())
+           .inviterName(invitation.getInviter().getFullName())
+           .inviterEmail(invitation.getInviter().getEmail())
            .build();
    }
 }

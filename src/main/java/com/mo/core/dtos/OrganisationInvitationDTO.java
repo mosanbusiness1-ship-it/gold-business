@@ -2,6 +2,8 @@ package com.mo.core.dtos;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.mo.core.enums.InvitationStatus;
 import com.mo.core.enums.MemberType;
 
@@ -14,6 +16,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class OrganisationInvitationDTO {
 
     private Long id;
@@ -28,4 +31,6 @@ public class OrganisationInvitationDTO {
     private LocalDateTime acceptedAt;
     private LocalDateTime revokedAt;
     private InvitationStatus status;
+    private String inviterName;
+    private String inviterEmail;
 }
