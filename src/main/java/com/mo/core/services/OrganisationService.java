@@ -618,12 +618,27 @@ public class OrganisationService {
        
        LocalDateTime expiresAt = LocalDateTime.now().plus(Duration.ofDays(7)); // 7 jours par défaut
        
+       // compute SHA-256 hex of token for secure storage/lookup
+       String tokenHash = null;
+       try {
+           java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+           byte[] digest = md.digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+           StringBuilder sb = new StringBuilder();
+           for (byte b : digest) {
+               sb.append(String.format("%02x", b));
+           }
+           tokenHash = sb.toString();
+       } catch (java.security.NoSuchAlgorithmException e) {
+           // fallback: leave tokenHash null (should not happen)
+       }
+
        OrganisationInvitation invitation = OrganisationInvitation.builder()
            .organisation(organisation)
            .inviter(inviter)
            .invitedEmail(invitedEmail)
            .role(resolvedRole)
            .token(token)
+           .tokenHash(tokenHash)
            .expiresAt(expiresAt)
            .status(InvitationStatus.PENDING)
            .build();
@@ -676,8 +691,29 @@ public class OrganisationService {
            organisationMemberRepository.save(member);
            
            // Mettre à jour le statut de l'invitation en ACCEPTED
-           OrganisationInvitation invitation = invitationRepository.findByToken(token)
-               .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
+           // For security we lookup by token hash
+           String tokenHash = null;
+           try {
+               java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+               byte[] digest = md.digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+               StringBuilder sb = new StringBuilder();
+               for (byte b : digest) {
+                   sb.append(String.format("%02x", b));
+               }
+               tokenHash = sb.toString();
+           } catch (java.security.NoSuchAlgorithmException e) {
+               // fallback: tokenHash stays null
+           }
+
+           OrganisationInvitation invitation = null;
+           if (tokenHash != null) {
+               invitation = invitationRepository.findByTokenHash(tokenHash)
+                   .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
+           } else {
+               // fallback to legacy lookup by token
+               invitation = invitationRepository.findByToken(token)
+                   .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
+           }
            invitation.setStatus(InvitationStatus.ACCEPTED);
            invitation.setAcceptedAt(LocalDateTime.now());
            invitationRepository.save(invitation);

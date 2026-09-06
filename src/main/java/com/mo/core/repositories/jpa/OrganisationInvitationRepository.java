@@ -16,6 +16,7 @@ import com.mo.core.model.organisations.OrganisationInvitation;
 public interface OrganisationInvitationRepository extends JpaRepository<OrganisationInvitation, Long> {
 
     Optional<OrganisationInvitation> findByToken(String token);
+    Optional<OrganisationInvitation> findByTokenHash(String tokenHash);
 
     List<OrganisationInvitation> findByOrganisationIdAndStatus(Long organisationId, InvitationStatus status);
 
@@ -24,6 +25,7 @@ public interface OrganisationInvitationRepository extends JpaRepository<Organisa
     List<OrganisationInvitation> findByOrganisationIdAndInvitedEmail(Long organisationId, String email);
 
     boolean existsByTokenAndStatus(String token, InvitationStatus status);
+    boolean existsByTokenHashAndStatus(String tokenHash, InvitationStatus status);
 
     @Query("SELECT oi FROM OrganisationInvitation oi WHERE oi.status = 'PENDING' AND oi.expiresAt < CURRENT_TIMESTAMP")
     List<OrganisationInvitation> findExpiredInvitations();
