@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
            @Index(name = "idx_org_inv_organisation", columnList = "organisation_id"),
            @Index(name = "idx_org_inv_inviter", columnList = "inviter_id"),
            @Index(name = "idx_org_inv_email", columnList = "invited_email"),
-           @Index(name = "idx_org_inv_token", columnList = "token", unique = true),
            @Index(name = "idx_org_inv_token_hash", columnList = "token_hash", unique = true),
            @Index(name = "idx_org_inv_status", columnList = "status"),
            @Index(name = "idx_org_inv_expires_at", columnList = "expires_at")
@@ -50,7 +49,7 @@ public class OrganisationInvitation {
     @Column(nullable = false)
     private MemberType role;
 
-    @Column(nullable = false, unique = true, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String token;
 
     @Column(name = "token_hash", length = 64, unique = true)

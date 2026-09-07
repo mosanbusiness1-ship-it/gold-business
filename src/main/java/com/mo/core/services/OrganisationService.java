@@ -637,7 +637,6 @@ public class OrganisationService {
            .inviter(inviter)
            .invitedEmail(invitedEmail)
            .role(resolvedRole)
-           .token(token)
            .tokenHash(tokenHash)
            .expiresAt(expiresAt)
            .status(InvitationStatus.PENDING)
@@ -710,9 +709,7 @@ public class OrganisationService {
                invitation = invitationRepository.findByTokenHash(tokenHash)
                    .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
            } else {
-               // fallback to legacy lookup by token
-               invitation = invitationRepository.findByToken(token)
-                   .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
+               throw new IllegalArgumentException("Impossible de valider le token d'invitation.");
            }
            invitation.setStatus(InvitationStatus.ACCEPTED);
            invitation.setAcceptedAt(LocalDateTime.now());
@@ -1318,15 +1315,30 @@ public class OrganisationService {
    }
 
    private com.mo.core.dtos.OrganisationInvitationDTO toInvitationDto(OrganisationInvitation invitation) {
-       String invitationLink = "http://localhost:3000/invitations/accept?token=" + invitation.getToken();
+       // Régénérer le token JWT à chaque fois qu'on récupère l'invitation
+       // Cela permet à l'invitant de toujours avoir un lien valide à partager
+       Long organisationId = invitation.getOrganisation().getId();
+       Long inviterId = invitation.getInviter().getId();
+       String email = invitation.getInvitedEmail();
+       MemberType role = invitation.getRole();
+       
+       // Calculer la durée de validité restante basée sur expiresAt
+       long validityMs = java.time.temporal.ChronoUnit.MILLIS.between(
+           java.time.LocalDateTime.now(), 
+           invitation.getExpiresAt()
+       );
+       validityMs = Math.max(validityMs, 0); // Ne pas avoir une validité négative
+       
+       String token = jwtService.generateInvitationToken(organisationId, inviterId, email, role, validityMs);
+       String invitationLink = "http://localhost:3000/invitations/accept?token=" + token;
 
        return com.mo.core.dtos.OrganisationInvitationDTO.builder()
            .id(invitation.getId())
-           .organisationId(invitation.getOrganisation().getId())
-           .inviterId(invitation.getInviter().getId())
-           .invitedEmail(invitation.getInvitedEmail())
-           .role(invitation.getRole())
-           .token(invitation.getToken())
+           .organisationId(organisationId)
+           .inviterId(inviterId)
+           .invitedEmail(email)
+           .role(role)
+           .token(token)
            .invitationLink(invitationLink)
            .sentAt(invitation.getSentAt())
            .expiresAt(invitation.getExpiresAt())
