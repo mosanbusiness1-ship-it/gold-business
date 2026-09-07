@@ -618,19 +618,9 @@ public class OrganisationService {
        
        LocalDateTime expiresAt = LocalDateTime.now().plus(Duration.ofDays(7)); // 7 jours par défaut
        
-       // compute SHA-256 hex of token for secure storage/lookup
-       String tokenHash = null;
-       try {
-           java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
-           byte[] digest = md.digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-           StringBuilder sb = new StringBuilder();
-           for (byte b : digest) {
-               sb.append(String.format("%02x", b));
-           }
-           tokenHash = sb.toString();
-       } catch (java.security.NoSuchAlgorithmException e) {
-           // fallback: leave tokenHash null (should not happen)
-       }
+       // Compute stable hash based on invitation parameters (not the token itself)
+       // This allows regenerating tokens later while still being able to match them
+       String tokenHash = computeInvitationHash(organisationId, invitedEmail, resolvedRole);
 
        OrganisationInvitation invitation = OrganisationInvitation.builder()
            .organisation(organisation)
@@ -690,27 +680,11 @@ public class OrganisationService {
            organisationMemberRepository.save(member);
            
            // Mettre à jour le statut de l'invitation en ACCEPTED
-           // For security we lookup by token hash
-           String tokenHash = null;
-           try {
-               java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
-               byte[] digest = md.digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-               StringBuilder sb = new StringBuilder();
-               for (byte b : digest) {
-                   sb.append(String.format("%02x", b));
-               }
-               tokenHash = sb.toString();
-           } catch (java.security.NoSuchAlgorithmException e) {
-               // fallback: tokenHash stays null
-           }
+           // Use stable hash based on invitation parameters (not the token itself)
+           String tokenHash = computeInvitationHash(organisationId, invitedEmail, memberType);
 
-           OrganisationInvitation invitation = null;
-           if (tokenHash != null) {
-               invitation = invitationRepository.findByTokenHash(tokenHash)
-                   .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
-           } else {
-               throw new IllegalArgumentException("Impossible de valider le token d'invitation.");
-           }
+           OrganisationInvitation invitation = invitationRepository.findByTokenHash(tokenHash)
+               .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
            invitation.setStatus(InvitationStatus.ACCEPTED);
            invitation.setAcceptedAt(LocalDateTime.now());
            invitationRepository.save(invitation);
@@ -729,6 +703,26 @@ public class OrganisationService {
            return MemberType.valueOf(rawRole.trim().toUpperCase());
        } catch (IllegalArgumentException ex) {
            return MemberType.FULL_MEMBER;
+       }
+   }
+
+   /**
+    * Compute a stable hash for an invitation based on organisation, email, and role.
+    * This hash is stable across multiple token regenerations, allowing us to match
+    * regenerated tokens with the original invitation in the database.
+    */
+   private String computeInvitationHash(Long organisationId, String invitedEmail, MemberType role) {
+       String toHash = organisationId + "|" + invitedEmail + "|" + role.name();
+       try {
+           java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+           byte[] digest = md.digest(toHash.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+           StringBuilder sb = new StringBuilder();
+           for (byte b : digest) {
+               sb.append(String.format("%02x", b));
+           }
+           return sb.toString();
+       } catch (java.security.NoSuchAlgorithmException e) {
+           throw new RuntimeException("SHA-256 algorithm not available", e);
        }
    }
 
