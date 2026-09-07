@@ -608,7 +608,6 @@ public class OrganisationService {
            throw new IllegalArgumentException("L'email invité est requis.");
        }
        MemberType resolvedRole = role != null ? role : MemberType.FULL_MEMBER;
-       String token = jwtService.generateInvitationToken(organisationId, currentUserId, invitedEmail, resolvedRole);
        
        // Enregistrer l'invitation en base de données
        Organisation organisation = organisationRepository.findById(organisationId)
@@ -618,8 +617,8 @@ public class OrganisationService {
        
        LocalDateTime expiresAt = LocalDateTime.now().plus(Duration.ofDays(7)); // 7 jours par défaut
        
-       // Compute stable hash based on invitation parameters (not the token itself)
-       // This allows regenerating tokens later while still being able to match them
+       // Compute stable hash based on invitation parameters
+       // This stable hash is used as the invitation token (64 chars instead of 500+ for JWT)
        String tokenHash = computeInvitationHash(organisationId, invitedEmail, resolvedRole);
 
        OrganisationInvitation invitation = OrganisationInvitation.builder()
@@ -634,65 +633,64 @@ public class OrganisationService {
        
        invitationRepository.save(invitation);
        
-       return token;
+       // Return the hash (short, stable token instead of JWT)
+       return tokenHash;
    }
    
-   public void acceptInvitationToken(String token, Long userId) {
-       if (token == null || token.isBlank()) {
+   public void acceptInvitationToken(String tokenHash, Long userId) {
+       if (tokenHash == null || tokenHash.isBlank()) {
            throw new IllegalArgumentException("Le token d'invitation est requis.");
        }
 
-       try {
-           Claims claims = jwtService.extractInvitationClaims(token);
-           Long organisationId = claims.get("organisationId", Long.class);
-           if (organisationId == null) {
-               throw new IllegalArgumentException("Token d'invitation invalide : organisationId manquant.");
-           }
+       // Find the invitation by its token hash
+       OrganisationInvitation invitation = invitationRepository.findByTokenHash(tokenHash)
+           .orElseThrow(() -> new EntityNotFoundException("Invitation introuvable ou expirée."));
 
-           String invitedEmail = claims.get("email", String.class);
-           User user = userRepository.findById(userId)
-                   .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
-           if (invitedEmail != null && !invitedEmail.isBlank() && !invitedEmail.equalsIgnoreCase(user.getEmail())) {
-               throw new IllegalArgumentException("Ce token n'est pas valide pour cet utilisateur.");
-           }
-
-           String roleClaim = claims.get("role", String.class);
-           MemberType memberType = parseMemberType(roleClaim);
-
-           Organisation organisation = organisationRepository.findById(organisationId)
-                   .orElseThrow(() -> new EntityNotFoundException("Organisation non trouvée"));
-           boolean alreadyMember = organisationMemberRepository.existsByOrganisationIdAndUserId(organisationId, userId);
-           if (alreadyMember) {
-               throw new IllegalStateException("Vous êtes déjà membre de cette organisation.");
-           }
-
-           OrganisationMember member = OrganisationMember.builder()
-                   .id(new OrganisationMemberId(organisationId, userId))
-                   .organisation(organisation)
-                   .user(user)
-                   .status(MemberStatus.ACTIVE)
-                   .type(memberType)
-                   .roles(Set.of(memberType.name()))
-                   .joinedAt(LocalDateTime.now())
-                   .modifiedAt(LocalDateTime.now())
-                   .build();
-
-           organisationMemberRepository.save(member);
-           
-           // Mettre à jour le statut de l'invitation en ACCEPTED
-           // Use stable hash based on invitation parameters (not the token itself)
-           String tokenHash = computeInvitationHash(organisationId, invitedEmail, memberType);
-
-           OrganisationInvitation invitation = invitationRepository.findByTokenHash(tokenHash)
-               .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
-           invitation.setStatus(InvitationStatus.ACCEPTED);
-           invitation.setAcceptedAt(LocalDateTime.now());
-           invitationRepository.save(invitation);
-       } catch (ExpiredJwtException e) {
+       // Check if invitation has expired
+       if (invitation.getExpiresAt().isBefore(LocalDateTime.now())) {
            throw new IllegalArgumentException("Le lien d'invitation a expiré.");
-       } catch (JwtException | IllegalArgumentException e) {
-           throw new IllegalArgumentException("Token d'invitation invalide ou corrompu.", e);
        }
+
+       // Check if already accepted or revoked
+       if (invitation.getStatus() == InvitationStatus.ACCEPTED) {
+           throw new IllegalStateException("Cette invitation a déjà été acceptée.");
+       }
+       if (invitation.getStatus() == InvitationStatus.REVOKED) {
+           throw new IllegalStateException("Cette invitation a été révoquée.");
+       }
+
+       // Verify the user's email matches the invited email
+       User user = userRepository.findById(userId)
+           .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+       if (!invitation.getInvitedEmail().equalsIgnoreCase(user.getEmail())) {
+           throw new IllegalArgumentException("Ce token n'est pas valide pour cet utilisateur.");
+       }
+
+       // Check if already a member
+       Long organisationId = invitation.getOrganisation().getId();
+       boolean alreadyMember = organisationMemberRepository.existsByOrganisationIdAndUserId(organisationId, userId);
+       if (alreadyMember) {
+           throw new IllegalStateException("Vous êtes déjà membre de cette organisation.");
+       }
+
+       // Add the user as a member
+       OrganisationMember member = OrganisationMember.builder()
+           .id(new OrganisationMemberId(organisationId, userId))
+           .organisation(invitation.getOrganisation())
+           .user(user)
+           .status(MemberStatus.ACTIVE)
+           .type(invitation.getRole())
+           .roles(Set.of(invitation.getRole().name()))
+           .joinedAt(LocalDateTime.now())
+           .modifiedAt(LocalDateTime.now())
+           .build();
+
+       organisationMemberRepository.save(member);
+       
+       // Mark invitation as accepted
+       invitation.setStatus(InvitationStatus.ACCEPTED);
+       invitation.setAcceptedAt(LocalDateTime.now());
+       invitationRepository.save(invitation);
    }
 
    private MemberType parseMemberType(String rawRole) {
@@ -1309,30 +1307,17 @@ public class OrganisationService {
    }
 
    private com.mo.core.dtos.OrganisationInvitationDTO toInvitationDto(OrganisationInvitation invitation) {
-       // Régénérer le token JWT à chaque fois qu'on récupère l'invitation
-       // Cela permet à l'invitant de toujours avoir un lien valide à partager
-       Long organisationId = invitation.getOrganisation().getId();
-       Long inviterId = invitation.getInviter().getId();
-       String email = invitation.getInvitedEmail();
-       MemberType role = invitation.getRole();
-       
-       // Calculer la durée de validité restante basée sur expiresAt
-       long validityMs = java.time.temporal.ChronoUnit.MILLIS.between(
-           java.time.LocalDateTime.now(), 
-           invitation.getExpiresAt()
-       );
-       validityMs = Math.max(validityMs, 0); // Ne pas avoir une validité négative
-       
-       String token = jwtService.generateInvitationToken(organisationId, inviterId, email, role, validityMs);
-       String invitationLink = "http://localhost:3000/invitations/accept?token=" + token;
+       // Return the stable token hash (short, reusable)
+       String tokenHash = invitation.getTokenHash();
+       String invitationLink = "http://localhost:3000/invitations/accept?token=" + tokenHash;
 
        return com.mo.core.dtos.OrganisationInvitationDTO.builder()
            .id(invitation.getId())
-           .organisationId(organisationId)
-           .inviterId(inviterId)
-           .invitedEmail(email)
-           .role(role)
-           .token(token)
+           .organisationId(invitation.getOrganisation().getId())
+           .inviterId(invitation.getInviter().getId())
+           .invitedEmail(invitation.getInvitedEmail())
+           .role(invitation.getRole())
+           .token(tokenHash)
            .invitationLink(invitationLink)
            .sentAt(invitation.getSentAt())
            .expiresAt(invitation.getExpiresAt())
