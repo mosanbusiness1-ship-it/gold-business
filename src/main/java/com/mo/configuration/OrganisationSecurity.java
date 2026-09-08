@@ -1,5 +1,6 @@
 package com.mo.configuration;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.security.core.Authentication;
@@ -58,21 +59,27 @@ public class OrganisationSecurity {
 
     public boolean isAdminOfOrganisation(Authentication authentication, Long organisationId) {
         User user = getAuthenticatedUser(authentication);
-        boolean isOwner = membershipService.isMemberWithRole(user.getId(), organisationId, "OWNER");
-        boolean isAdmin = membershipService.isMemberWithRole(user.getId(), organisationId, "ADMIN");
-        log.debug("OrganisationSecurity.isAdminOfOrganisation: userId={}, organisationId={}, isOwner={}, isAdmin={}", user.getId(), organisationId, isOwner, isAdmin);
+        Optional<MemberType> activeType = membershipService.findActiveMemberType(user.getId(), organisationId);
+        boolean isOwner = activeType.filter(type -> type == MemberType.OWNER).isPresent();
+        boolean isAdmin = activeType.filter(type -> type == MemberType.ADMIN).isPresent();
+        log.debug("OrganisationSecurity.isAdminOfOrganisation: userId={}, organisationId={}, activeType={}, isOwner={}, isAdmin={}", user.getId(), organisationId, activeType.orElse(null), isOwner, isAdmin);
         return isOwner || isAdmin;
     }
 
     public boolean isModeratorOfOrganisation(Authentication authentication, Long organisationId) {
         User user = getAuthenticatedUser(authentication);
-        return membershipService.isMemberWithRole(user.getId(), organisationId, "MODERATOR");
+        MemberType activeType = membershipService.findActiveMemberType(user.getId(), organisationId).orElse(null);
+        boolean isModerator = activeType == MemberType.ADMIN || activeType == MemberType.OWNER;
+        log.debug("OrganisationSecurity.isModeratorOfOrganisation: userId={}, organisationId={}, activeType={}, isModerator={}", user.getId(), organisationId, activeType, isModerator);
+        return isModerator;
     }
 
     public boolean canModerateOrganisation(Authentication authentication, Long organisationId) {
         User user = getAuthenticatedUser(authentication);
-        return membershipService.isMemberWithRole(user.getId(), organisationId, "MODERATOR")
-                || membershipService.isMemberWithRole(user.getId(), organisationId, "ADMIN");
+        MemberType activeType = membershipService.findActiveMemberType(user.getId(), organisationId).orElse(null);
+        boolean canModerate = activeType == MemberType.ADMIN || activeType == MemberType.OWNER;
+        log.debug("OrganisationSecurity.canModerateOrganisation: userId={}, organisationId={}, activeType={}, canModerate={}", user.getId(), organisationId, activeType, canModerate);
+        return canModerate;
     }
 
     public boolean isMemberOfOrganisation(Authentication authentication, Long organisationId) {
@@ -88,8 +95,10 @@ public class OrganisationSecurity {
 
     public boolean isOwnerOrAdmin(Authentication authentication, Long organisationId) {
         User user = getAuthenticatedUser(authentication);
-        return membershipService.isMemberWithRole(user.getId(), organisationId, "OWNER")
-                || membershipService.isMemberWithRole(user.getId(), organisationId, "ADMIN");
+        MemberType activeType = membershipService.findActiveMemberType(user.getId(), organisationId).orElse(null);
+        boolean isOwnerOrAdmin = activeType == MemberType.OWNER || activeType == MemberType.ADMIN;
+        log.debug("OrganisationSecurity.isOwnerOrAdmin: userId={}, organisationId={}, activeType={}, isOwnerOrAdmin={}", user.getId(), organisationId, activeType, isOwnerOrAdmin);
+        return isOwnerOrAdmin;
     }
 
     public boolean isAllowedToAddProduct(Authentication authentication, Long organisationId) {
