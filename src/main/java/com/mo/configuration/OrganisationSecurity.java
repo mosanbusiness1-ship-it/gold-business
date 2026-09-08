@@ -14,10 +14,13 @@ import com.mo.core.services.OrganisationService;
 import com.mo.repositories.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 public class OrganisationSecurity {
+
+    private static final Logger log = LoggerFactory.getLogger(OrganisationSecurity.class);
 
     private final OrganisationMembershipService membershipService;
     private final OrganisationService organisationService;
@@ -31,17 +34,21 @@ public class OrganisationSecurity {
 
     private User getAuthenticatedUser(Authentication authentication) {
         String email = authentication.getName();
+        log.debug("OrganisationSecurity.getAuthenticatedUser: authenticationName={}, email={}", authentication != null ? authentication.getName() : null, email);
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable"));
     }
 
     private boolean hasOrgPermission(Authentication authentication, Long organisationId, Set<String> allowedRoles) {
         User user = getAuthenticatedUser(authentication);
+        log.debug("OrganisationSecurity.hasOrgPermission: userId={}, organisationId={}, allowedRoles={}", user.getId(), organisationId, allowedRoles);
         if (!membershipService.isMember(user.getId(), organisationId)) {
+            log.warn("OrganisationSecurity.hasOrgPermission: userId={} not member of organisationId={}", user.getId(), organisationId);
             return false;
         }
 
         MemberType memberType = membershipService.findActiveMemberType(user.getId(), organisationId).orElse(null);
+        log.debug("OrganisationSecurity.hasOrgPermission: userId={}, orgId={}, memberType={}", user.getId(), organisationId, memberType);
         if (memberType != null && allowedRoles.contains(memberType.name())) {
             return true;
         }
@@ -51,8 +58,10 @@ public class OrganisationSecurity {
 
     public boolean isAdminOfOrganisation(Authentication authentication, Long organisationId) {
         User user = getAuthenticatedUser(authentication);
-        return membershipService.isMemberWithRole(user.getId(), organisationId, "OWNER")
-                || membershipService.isMemberWithRole(user.getId(), organisationId, "ADMIN");
+        boolean isOwner = membershipService.isMemberWithRole(user.getId(), organisationId, "OWNER");
+        boolean isAdmin = membershipService.isMemberWithRole(user.getId(), organisationId, "ADMIN");
+        log.debug("OrganisationSecurity.isAdminOfOrganisation: userId={}, organisationId={}, isOwner={}, isAdmin={}", user.getId(), organisationId, isOwner, isAdmin);
+        return isOwner || isAdmin;
     }
 
     public boolean isModeratorOfOrganisation(Authentication authentication, Long organisationId) {

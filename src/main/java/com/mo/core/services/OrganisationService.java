@@ -608,6 +608,7 @@ public class OrganisationService {
            throw new IllegalArgumentException("L'email invité est requis.");
        }
        MemberType resolvedRole = role != null ? role : MemberType.FULL_MEMBER;
+       log.info("Invitation creation requested: orgId={}, inviterUserId={}, invitedEmail={}, role={}", organisationId, currentUserId, invitedEmail, resolvedRole);
        
        // Enregistrer l'invitation en base de données
        Organisation organisation = organisationRepository.findById(organisationId)
@@ -617,7 +618,9 @@ public class OrganisationService {
        
        // Vérifier s'il existe déjà une invitation PENDING ou ACCEPTED pour cet email dans cette org
        List<OrganisationInvitation> existingInvitations = invitationRepository.findByOrganisationIdAndInvitedEmail(organisationId, invitedEmail);
+       log.info("Invitation duplicate check: orgId={}, invitedEmail={}, existingCount={}", organisationId, invitedEmail, existingInvitations.size());
        for (OrganisationInvitation existing : existingInvitations) {
+           log.info("Existing invitation found: invitationId={}, status={}, invitedEmail={}, orgId={}", existing.getId(), existing.getStatus(), existing.getInvitedEmail(), existing.getOrganisation().getId());
            if (existing.getStatus() == InvitationStatus.PENDING || existing.getStatus() == InvitationStatus.ACCEPTED) {
                if (existing.getStatus() == InvitationStatus.ACCEPTED) {
                    throw new IllegalArgumentException("Cet utilisateur est déjà membre de cette organisation.");
@@ -632,6 +635,7 @@ public class OrganisationService {
        // Compute stable hash based on invitation parameters
        // This stable hash is used as the invitation token (64 chars instead of 500+ for JWT)
        String tokenHash = computeInvitationHash(organisationId, invitedEmail, resolvedRole);
+       log.info("Invitation hash generated: orgId={}, invitedEmail={}, tokenHash={}", organisationId, invitedEmail, tokenHash);
 
        OrganisationInvitation invitation = OrganisationInvitation.builder()
            .organisation(organisation)
@@ -644,6 +648,7 @@ public class OrganisationService {
            .build();
        
        invitationRepository.save(invitation);
+       log.info("Invitation persisted successfully: invitationId={}, orgId={}, invitedEmail={}, tokenHash={}", invitation.getId(), organisationId, invitedEmail, tokenHash);
        
        // Return the hash (short, stable token instead of JWT)
        return tokenHash;
