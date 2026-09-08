@@ -51,7 +51,8 @@ public class OrganisationSecurity {
 
     public boolean isAdminOfOrganisation(Authentication authentication, Long organisationId) {
         User user = getAuthenticatedUser(authentication);
-        return membershipService.isMemberWithRole(user.getId(), organisationId, "ADMIN");
+        return membershipService.isMemberWithRole(user.getId(), organisationId, "OWNER")
+                || membershipService.isMemberWithRole(user.getId(), organisationId, "ADMIN");
     }
 
     public boolean isModeratorOfOrganisation(Authentication authentication, Long organisationId) {

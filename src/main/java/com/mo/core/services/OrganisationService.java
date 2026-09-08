@@ -615,6 +615,18 @@ public class OrganisationService {
        User inviter = userRepository.findById(currentUserId)
            .orElseThrow(() -> new EntityNotFoundException("User not found"));
        
+       // Vérifier s'il existe déjà une invitation PENDING ou ACCEPTED pour cet email dans cette org
+       List<OrganisationInvitation> existingInvitations = invitationRepository.findByOrganisationIdAndInvitedEmail(organisationId, invitedEmail);
+       for (OrganisationInvitation existing : existingInvitations) {
+           if (existing.getStatus() == InvitationStatus.PENDING || existing.getStatus() == InvitationStatus.ACCEPTED) {
+               if (existing.getStatus() == InvitationStatus.ACCEPTED) {
+                   throw new IllegalArgumentException("Cet utilisateur est déjà membre de cette organisation.");
+               } else {
+                   throw new IllegalArgumentException("Une invitation est déjà en attente pour cet utilisateur dans cette organisation.");
+               }
+           }
+       }
+       
        LocalDateTime expiresAt = LocalDateTime.now().plus(Duration.ofDays(7)); // 7 jours par défaut
        
        // Compute stable hash based on invitation parameters
