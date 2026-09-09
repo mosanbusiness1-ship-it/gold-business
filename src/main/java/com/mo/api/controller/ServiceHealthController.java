@@ -75,4 +75,13 @@ public class ServiceHealthController {
         Map<String, Object> result = verificationService.verifyAstraDBConnection();
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * Public hello endpoint
+     */
+    @GetMapping("/hello")
+    @Operation(summary = "Public hello endpoint", description = "Public endpoint returning Hello! without authentication")
+    public ResponseEntity<String> hello() {
+        return ResponseEntity.ok("Hello!");
+    }
 }
