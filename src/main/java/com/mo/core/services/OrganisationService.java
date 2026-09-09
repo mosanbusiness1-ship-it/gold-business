@@ -239,6 +239,10 @@ public class OrganisationService {
         return organisationRepository.existsByIdAndOwnerId(organisationId, userId);
     }
 
+    public boolean isAdmin(Long userId, Long organisationId) {
+        return organisationMemberRepository.existsByOrganisationIdAndUserIdAndType(organisationId, userId, MemberType.ADMIN);
+    }
+
     @Transactional(readOnly = true)
     public Page<Organisation> getVerifiedOrganisations(int page, int size) {
         log.info("getVerifiedOrganisations called: page={}, size={}", page, size);

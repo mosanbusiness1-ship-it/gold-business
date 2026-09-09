@@ -254,6 +254,17 @@ public class OrganisationController {
         return ResponseEntity.ok(organisationService.isOwner(user.getId(), orgId));
     }
 
+    @GetMapping("/{orgId}/isadmin")
+    @Operation(summary = "Check if the authenticated user is an admin of the organization")
+    public ResponseEntity<Boolean> isAdmin(
+        @PathVariable Long orgId, 
+        @AuthenticationPrincipal User user 
+    ) {
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(organisationService.isAdmin(user.getId(), orgId));
+    }
 
     // Hierarchy: protected
     @GetMapping("/{id}/hierarchy")
