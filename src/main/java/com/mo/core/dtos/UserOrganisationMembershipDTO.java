@@ -19,6 +19,9 @@ public class UserOrganisationMembershipDTO {
     @JsonProperty("organisation_name")
     private String organisationName;
 
+    @JsonProperty("organisation_logo_url")
+    private String organisationLogoUrl;
+
     @JsonProperty("organisation_type")
     private OrganisationType organisationType;
 

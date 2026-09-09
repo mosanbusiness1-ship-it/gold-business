@@ -131,6 +131,7 @@ public class OrganisationMembershipService {
             .map(membership -> UserOrganisationMembershipDTO.builder()
                 .organisationId(membership.getOrganisation().getId())
                 .organisationName(membership.getOrganisation().getName())
+                .organisationLogoUrl(membership.getOrganisation().getLogoUrl())
                 .organisationType(membership.getOrganisation().getType())
                 .memberType(membership.getType())
                 .build())
