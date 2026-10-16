@@ -16,7 +16,9 @@ import java.util.List;
 
 import com.mo.core.events.AuctionBidEvent;
 import com.mo.core.kafka.AuctionBidProducer;
+import com.mo.core.enums.OrganisationVisibility;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 
 @Service
 public class BidService {
@@ -26,18 +28,21 @@ public class BidService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final AuctionBidProducer auctionBidProducer;
+    private final OrganisationMembershipService organisationMembershipService;
 
     @Autowired
     public BidService(BidRepository bidRepository,
                       AuctionRepository auctionRepository,
                       ProductRepository productRepository,
                       UserRepository userRepository,
-                      AuctionBidProducer auctionBidProducer) {
+                      AuctionBidProducer auctionBidProducer,
+                      OrganisationMembershipService organisationMembershipService) {
         this.bidRepository = bidRepository;
         this.auctionRepository = auctionRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.auctionBidProducer = auctionBidProducer;
+        this.organisationMembershipService = organisationMembershipService;
     }
 
     @Transactional
@@ -53,11 +58,13 @@ public class BidService {
             throw new IllegalArgumentException("Le montant de l'enchère doit être positif.");
         }
 
-        AbstractProduct product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("Produit introuvable: " + productId));
-
         User bidder = userRepository.findById(bidderId)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable: " + bidderId));
+
+        enforceBidVisibilityRules(auction, bidder.getId());
+
+        AbstractProduct product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Produit introuvable: " + productId));
 
         Bid highestBid = bidRepository.findByAuctionId(auctionId).stream()
                 .max((b1, b2) -> b1.getAmount().compareTo(b2.getAmount()))
@@ -89,6 +96,29 @@ public class BidService {
         auctionBidProducer.publishBidEvent(event);
 
         return savedBid;
+    }
+
+    private void enforceBidVisibilityRules(Auction auction, Long bidderId) {
+        if (auction == null || auction.getNeed() == null || auction.getNeed().getOrganisations() == null || auction.getNeed().getOrganisations().isEmpty()) {
+            return;
+        }
+
+        boolean hasRestrictedOrg = auction.getNeed().getOrganisations().stream()
+                .filter(org -> org != null)
+                .anyMatch(org -> org.getVisibility() == OrganisationVisibility.PROTECTED || org.getVisibility() == OrganisationVisibility.PRIVATE);
+
+        if (!hasRestrictedOrg) {
+            return;
+        }
+
+        boolean isMemberOfAnyRestrictedOrg = auction.getNeed().getOrganisations().stream()
+                .filter(org -> org != null)
+                .filter(org -> org.getVisibility() == OrganisationVisibility.PROTECTED || org.getVisibility() == OrganisationVisibility.PRIVATE)
+                .anyMatch(org -> organisationMembershipService.isMember(bidderId, org.getId()));
+
+        if (!isMemberOfAnyRestrictedOrg) {
+            throw new AccessDeniedException("This auction is restricted to organisation members only.");
+        }
     }
 
     public List<Bid> getBidsForAuction(Long auctionId) {
