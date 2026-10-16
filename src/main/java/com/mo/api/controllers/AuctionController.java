@@ -25,6 +25,10 @@ import com.mo.core.visitors.product_visitors.ProductVisitorRegistry;
 import com.mo.mappers.needMappers.NeedMapperJackson;
 import com.mo.mappers.productsMappers.ProductMapperJackson;
 import com.mo.repositories.UserRepository;
+import com.mo.core.dtos.auctions.AuctionSummaryDTO;
+import com.mo.core.kafka.AuctionBidProducer;
+import com.mo.core.services.AuctionLiveUpdateService;
+
 import lombok.extern.slf4j.Slf4j;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -66,18 +70,22 @@ public class AuctionController {
     private final ProductMapperJackson mapperVisitor;
     private final NeedMapperJackson needmapper;
     private final UserRepository userRepository;
+    private final AuctionBidProducer auctionBidProducer;
+    private final AuctionLiveUpdateService auctionLiveUpdateService;
 
     @Autowired
-    public AuctionController(AuctionService auctionService, BidService bidService, ProductVisitor<Double> qualityEvaluationVisitor, ProductService service, ProductVisitorRegistry registry, ProductService productService, ProductMapperJackson mapperVisitor, UserNeedService needService, NeedMapperJackson needmapper, UserRepository userRepository) {
+    public AuctionController(AuctionService auctionService, BidService bidService, ProductVisitor<Double> qualityEvaluationVisitor, ProductService service, ProductVisitorRegistry registry, ProductService productService, ProductMapperJackson mapperVisitor, UserNeedService needService, NeedMapperJackson needmapper, UserRepository userRepository, AuctionBidProducer auctionBidProducer, AuctionLiveUpdateService auctionLiveUpdateService) {
         this.auctionService = auctionService;
         this.bidService = bidService;
-	this.needService = needService;
+        this.needService = needService;
         this.qualityEvaluationVisitor = qualityEvaluationVisitor;
-	this.productService = productService;
-	this.registry = registry;
-	this.mapperVisitor = mapperVisitor;
-	this.needmapper = needmapper;
-	this.userRepository = userRepository;
+        this.productService = productService;
+        this.registry = registry;
+        this.mapperVisitor = mapperVisitor;
+        this.needmapper = needmapper;
+        this.userRepository = userRepository;
+        this.auctionBidProducer = auctionBidProducer;
+        this.auctionLiveUpdateService = auctionLiveUpdateService;
     }
 
     // 1️⃣ Create an auction
@@ -234,6 +242,7 @@ public class AuctionController {
 
         Long bidderId = request.getBidderId() != null ? request.getBidderId() : currentUser.getId();
         Bid bid = bidService.placeBid(auctionId, request.getProductId(), bidderId, request.getAmount());
+        auctionLiveUpdateService.broadcastAuctionSummary(auctionId);
         return ResponseEntity.ok(toBidResponse(bid));
     }
 
@@ -351,5 +360,12 @@ public class AuctionController {
             !auction.getNeed().getUser().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("You are not allowed to modify this auction");
         }
+    }
+
+    @GetMapping("/{auctionId}/summary")
+    @Operation(summary = "Get live auction summary", description = "Return the current highest bid and winner for an auction in snake_case JSON")
+    public ResponseEntity<AuctionSummaryDTO> getAuctionSummary(@PathVariable Long auctionId) {
+        AuctionSummaryDTO summary = auctionLiveUpdateService.buildSummary(auctionId);
+        return ResponseEntity.ok(summary);
     }
 }

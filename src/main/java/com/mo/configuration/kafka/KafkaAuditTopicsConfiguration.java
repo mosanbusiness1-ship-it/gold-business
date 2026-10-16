@@ -18,6 +18,8 @@ public class KafkaAuditTopicsConfiguration {
     static final String TOPIC_PRODUCT_DELETIONS = "product-deletions-audit";
     static final String TOPIC_PRODUCT_INDEXING = "product-indexing-events";
     static final String TOPIC_AUCTION_NOTIFICATIONS = "notify-user-for-winningAuction";
+    static final String TOPIC_AUCTION_BID_EVENTS = "auction-bid-events";
+    static final String TOPIC_AUCTION_LIVE_UPDATES = "auction-live-updates";
 
     // Dead-letter queues (suffix: -dlq)
     static final String TOPIC_PRODUCT_STRICT_MATCHES_DLQ = "product-strict-matches-dlq";
@@ -25,6 +27,8 @@ public class KafkaAuditTopicsConfiguration {
     static final String TOPIC_PRODUCT_DELETIONS_DLQ = "product-deletions-audit-dlq";
     static final String TOPIC_PRODUCT_INDEXING_DLQ = "product-indexing-events-dlq";
     static final String TOPIC_AUCTION_NOTIFICATIONS_DLQ = "notify-user-for-winningAuction-dlq";
+    static final String TOPIC_AUCTION_BID_EVENTS_DLQ = "auction-bid-events-dlq";
+    static final String TOPIC_AUCTION_LIVE_UPDATES_DLQ = "auction-live-updates-dlq";
 
     // === Topics Principaux ===
 
@@ -73,6 +77,24 @@ public class KafkaAuditTopicsConfiguration {
                 .build();
     }
 
+    @Bean
+    public NewTopic auctionBidEventsTopic() {
+        return TopicBuilder.name(TOPIC_AUCTION_BID_EVENTS)
+                .partitions(3)
+                .replicas(1)
+                .config("retention.ms", String.valueOf(7 * 24 * 60 * 60 * 1000))
+                .build();
+    }
+
+    @Bean
+    public NewTopic auctionLiveUpdatesTopic() {
+        return TopicBuilder.name(TOPIC_AUCTION_LIVE_UPDATES)
+                .partitions(3)
+                .replicas(1)
+                .config("retention.ms", String.valueOf(7 * 24 * 60 * 60 * 1000))
+                .build();
+    }
+
     // === Dead-Letter Queue Topics ===
 
     @Bean
@@ -117,6 +139,24 @@ public class KafkaAuditTopicsConfiguration {
                 .partitions(1)
                 .replicas(1)
                 .config("retention.ms", String.valueOf(90 * 24 * 60 * 60 * 1000)) // 90 jours (critique)
+                .build();
+    }
+
+    @Bean
+    public NewTopic auctionBidEventsDlqTopic() {
+        return TopicBuilder.name(TOPIC_AUCTION_BID_EVENTS_DLQ)
+                .partitions(1)
+                .replicas(1)
+                .config("retention.ms", String.valueOf(30 * 24 * 60 * 60 * 1000))
+                .build();
+    }
+
+    @Bean
+    public NewTopic auctionLiveUpdatesDlqTopic() {
+        return TopicBuilder.name(TOPIC_AUCTION_LIVE_UPDATES_DLQ)
+                .partitions(1)
+                .replicas(1)
+                .config("retention.ms", String.valueOf(30 * 24 * 60 * 60 * 1000))
                 .build();
     }
 }

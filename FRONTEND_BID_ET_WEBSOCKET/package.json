@@ -1,0 +1,20 @@
+{
+  "name": "frontend-bid-websocket",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@stomp/stompjs": "^7.2.0",
+    "sockjs-client": "^1.6.1"
+  },
+  "devDependencies": {
+    "@types/sockjs-client": "^1.6.1",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}
