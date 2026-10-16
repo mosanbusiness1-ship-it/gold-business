@@ -324,8 +324,10 @@ public class OrganisationController {
             @RequestParam @io.swagger.v3.oas.annotations.Parameter(description = "Product id to attach", example = "451") Long productId) {
         log.info("→ Starting add product to organisation: orgId={}, productId={}", orgId, productId);
 
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
         // Ajout du produit à l'organisation
-        Organisation org = organisationService.addProductToOrganisation(orgId, productId);
+        Organisation org = organisationService.addProductToOrganisation(orgId, productId, currentUser.getId());
         log.info("✔ Product added to organisation");
 
         // Conversion des produits associés en DTOs

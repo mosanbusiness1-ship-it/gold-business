@@ -6,6 +6,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -333,24 +334,31 @@ public class OrganisationService {
     }
 
     // PRODUCT MANAGEMENT
-    public Organisation addProductToOrganisation(Long organisationId, Long productId) {
-        // Récupérer l'organisation
+    public Organisation addProductToOrganisation(Long organisationId, Long productId, Long currentUserId) {
+        if (currentUserId == null) {
+            throw new AccessDeniedException("Authentication required to attach a product to an organisation");
+        }
+
         Organisation organisation = organisationRepository.findById(organisationId)
             .orElseThrow(() -> new EntityNotFoundException("Organisation not found"));
 
-        // Récupérer le produit
         AbstractProduct product = productRepository.findById(productId)
             .orElseThrow(() -> new EntityNotFoundException("Product not found"));
 
-        // Vérifier si le produit est déjà ajouté à l'organisation
         if (organisation.getProducts().stream().anyMatch(p -> p.getId().equals(productId))) {
             throw new IllegalStateException("Product already exists in organisation");
         }
 
-        // Ajouter le produit à l'organisation
+        User productOwner = product.getOwner();
+        boolean isProductOwner = productOwner != null && productOwner.getId().equals(currentUserId);
+        boolean isOrgAdminOrOwner = organisationMemberRepository.existsByOrganisationIdAndUserIdAndType(organisationId, currentUserId, MemberType.ADMIN)
+            || organisationMemberRepository.existsByOrganisationIdAndUserIdAndType(organisationId, currentUserId, MemberType.OWNER);
+
+        if (!isProductOwner && !isOrgAdminOrOwner) {
+            throw new AccessDeniedException("You are not allowed to attach this product to the organisation");
+        }
+
         organisation.getProducts().add(product);
-        
-        // Sauvegarder l'organisation mise à jour
         return organisationRepository.save(organisation);
     }
 
