@@ -101,6 +101,10 @@ public class UserNeedService {
         return userNeedRepository.findByUserId(userId);
     }
 
+    public java.util.Optional<AbstractUserNeed> getNeedById(Long id) {
+        return userNeedRepository.findById(id);
+    }
+
     // recuperation sql
     public List<AbstractProduct> findMatchingProductsForUser(Long userId) {
         List<AbstractUserNeed> needs = userNeedRepository.findByUserId(userId);

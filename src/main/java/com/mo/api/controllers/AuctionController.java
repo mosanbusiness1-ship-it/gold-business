@@ -43,6 +43,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -63,7 +66,6 @@ public class AuctionController {
     private final ProductMapperJackson mapperVisitor;
     private final NeedMapperJackson needmapper;
     private final UserRepository userRepository;
-    
 
     @Autowired
     public AuctionController(AuctionService auctionService, BidService bidService, ProductVisitor<Double> qualityEvaluationVisitor, ProductService service, ProductVisitorRegistry registry, ProductService productService, ProductMapperJackson mapperVisitor, UserNeedService needService, NeedMapperJackson needmapper, UserRepository userRepository) {
@@ -80,6 +82,7 @@ public class AuctionController {
 
     // 1️⃣ Create an auction
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     @Operation(
         summary = "Create an auction",
         description = "Create an auction together with its underlying need",
@@ -96,29 +99,34 @@ public class AuctionController {
             )
         )
     )
-    public ResponseEntity<CreateAuctionDTO> createAuction(@RequestBody AuctionRequest request) {
-        // 1. Create the need from the incoming DTO
+    public ResponseEntity<CreateAuctionDTO> createAuction(@RequestBody AuctionRequest request,
+                                                         @AuthenticationPrincipal User currentUser) {
+        if (request.getUserId() != null && !request.getUserId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("The userId in the payload does not match the authenticated user");
+        }
+
+        if (request.getNeed() != null && request.getNeed().getUserId() != null && !request.getNeed().getUserId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("The need user_id in the payload does not match the authenticated user");
+        }
+
+        if (request.getUserId() == null) {
+            request.setUserId(currentUser.getId());
+        }
+        if (request.getNeed() != null) {
+            request.getNeed().setUserId(currentUser.getId());
+        }
+
         AbstractUserNeed savedNeed = needService.createFromDto(request.getNeed());
-        User user = userRepository.findById(request.getUserId()).get();
-        savedNeed.setUser(user);
+        savedNeed.setUser(currentUser);
         savedNeed = needService.createNeed(savedNeed);
-        
-  
-        // 2. Créer Auction avec lien vers Need
+
         Auction auction = new Auction();
         auction.setStartedAt(request.getStartedAt());
         auction.setEndAt(request.getEndAt());
         auction.setActived(request.isActived());
         auction.setNeed(savedNeed);
-        
-        System.out.println("apressssssssssss"
-        		+ ""
-        		+ ""
-        		+ ""+savedNeed);
-        
 
         CreateAuctionDTO savedAuction = auctionService.save(auction);
-
         return ResponseEntity.ok(savedAuction);
     }
 
@@ -126,13 +134,15 @@ public class AuctionController {
 
     // 2️⃣ Supprimer une enchère
     @DeleteMapping("/{auctionId}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Delete auction", description = "Delete an auction by its ID")
-    public ResponseEntity<Void> deleteAuction(@PathVariable Long auctionId) {
-        Optional<Auction> auction = auctionService.findById(auctionId);
-        if (auction.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        auctionService.delete(auctionId); // on peut adapter delete pour prendre Long
+    public ResponseEntity<Void> deleteAuction(@PathVariable Long auctionId,
+                                            @AuthenticationPrincipal User currentUser) {
+        Auction auction = auctionService.findById(auctionId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Auction not found"));
+
+        validateAuctionOwnerOrThrow(auction, currentUser);
+        auctionService.delete(auctionId);
         return ResponseEntity.noContent().build();
     }
 
@@ -213,10 +223,17 @@ public class AuctionController {
 
     // 6️⃣ Placer une offre (bid) sur une enchère
     @PostMapping("/{auctionId}/bids")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Place bid", description = "Create a bid on the specified auction")
     public ResponseEntity<BidResponseDTO> placeBid(@PathVariable Long auctionId,
-                                                   @RequestBody CreateBidRequest request) {
-        Bid bid = bidService.placeBid(auctionId, request.getProductId(), request.getBidderId(), request.getAmount());
+                                                   @RequestBody CreateBidRequest request,
+                                                   @AuthenticationPrincipal User currentUser) {
+        if (request.getBidderId() != null && !request.getBidderId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("The bidderId in the payload does not match the authenticated user");
+        }
+
+        Long bidderId = request.getBidderId() != null ? request.getBidderId() : currentUser.getId();
+        Bid bid = bidService.placeBid(auctionId, request.getProductId(), bidderId, request.getAmount());
         return ResponseEntity.ok(toBidResponse(bid));
     }
 
@@ -236,6 +253,7 @@ public class AuctionController {
     
     @Transactional
     @PostMapping("/{auctionId}/products")
+    @PreAuthorize("isAuthenticated()")
     @Operation(
         summary = "Add a product to an auction",
         description = "Create a product from the provided DTO and attach it to an auction",
@@ -256,11 +274,19 @@ public class AuctionController {
     )
     public ResponseEntity<CreateAuctionDTO> addProductToAuctionUsingAbstractProduct(
             @PathVariable Long auctionId,
-            @RequestBody AbstractProductDto productDto
-    ) {
+            @RequestBody AbstractProductDto productDto,
+            @AuthenticationPrincipal User currentUser) {
         log.info("➡️ Received request to create product for auction: {}", productDto);
 
+        if (productDto.getOwnerId() != null && !productDto.getOwnerId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("The product owner_id in the payload does not match the authenticated user");
+        }
+
         AbstractProduct savedProduct = productService.createFromDto(productDto);
+        if (savedProduct.getOwner() != null && !savedProduct.getOwner().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You are not allowed to attach a product not owned by you to this auction");
+        }
+
         log.info("✅ Product created: id={}, type={}", savedProduct.getId(), savedProduct.getType());
 
         Auction updated = auctionService.addProductToAuction(auctionId, savedProduct.getId());
@@ -318,5 +344,12 @@ public class AuctionController {
         dto.setCurrency(need.getCurrency());
         dto.setNeedDescription(need.getDescription());
         return dto;
+    }
+
+    private void validateAuctionOwnerOrThrow(Auction auction, User currentUser) {
+        if (auction == null || auction.getNeed() == null || auction.getNeed().getUser() == null ||
+            !auction.getNeed().getUser().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You are not allowed to modify this auction");
+        }
     }
 }

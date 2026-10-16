@@ -8,6 +8,7 @@ import com.mo.core.model.products.AbstractProduct;
 import com.mo.core.services.OrganisationService;
 import com.mo.core.services.UserNeedService;
 import com.mo.mappers.needMappers.NeedMapperJackson;
+import com.mo.auth.User;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -24,7 +25,9 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @RestController
 @RequestMapping("/public/needs")
@@ -46,7 +49,14 @@ public class UserNeedController {
     }
 
 
+    private void validateResourceOwnerOrThrow(AbstractUserNeed need, User currentUser) {
+        if (need == null || need.getUser() == null || !need.getUser().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You are not allowed to modify this need");
+        }
+    }
+
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
         summary = "Create a need",
@@ -64,10 +74,20 @@ public class UserNeedController {
             )
         )
     )
-    public ResponseEntity<?> createNeed(@RequestBody AbstractUserNeedDto needDto) {
+    public ResponseEntity<?> createNeed(@RequestBody AbstractUserNeedDto needDto,
+                                       @AuthenticationPrincipal User currentUser) {
         log.info("➡️ Received request to create need: {}", needDto);
 
+        if (needDto.getUserId() != null && !needDto.getUserId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("The user_id in the payload does not match the authenticated user");
+        }
+        if (needDto.getUserId() == null) {
+            needDto.setUserId(currentUser.getId());
+        }
+
         AbstractUserNeed savedNeed = userNeedService.createFromDto(needDto);
+        savedNeed.setUser(currentUser);
+        savedNeed = userNeedService.createNeed(savedNeed);
         log.info("✅ Need saved: id={}, type={}, data={}", savedNeed.getId(), savedNeed.getType(), savedNeed);
 
         List<Map<String, Object>> matchingProducts = userNeedService.searchMatchingProducts(savedNeed);
@@ -83,6 +103,7 @@ public class UserNeedController {
     
    
     @PostMapping("/toorg")
+    @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
         summary = "Create a need for organisations",
@@ -100,13 +121,22 @@ public class UserNeedController {
             )
         )
     )
-    public ResponseEntity<?> createNeedForOrganisations(@RequestBody AbstractUserNeedDto needDto) {
+    public ResponseEntity<?> createNeedForOrganisations(@RequestBody AbstractUserNeedDto needDto,
+                                                      @AuthenticationPrincipal User currentUser) {
         log.info("➡️ Received request to create need for organisations: {}", needDto);
 
+        if (needDto.getUserId() != null && !needDto.getUserId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("The user_id in the payload does not match the authenticated user");
+        }
+        if (needDto.getUserId() == null) {
+            needDto.setUserId(currentUser.getId());
+        }
+
         AbstractUserNeed savedNeed = userNeedService.createFromDto(needDto);
+        savedNeed.setUser(currentUser);
+        savedNeed = userNeedService.createNeed(savedNeed);
         log.info("✅ Need saved: id={}, type={}", savedNeed.getId(), savedNeed.getType());
 
-        // Optional search for matching products
         List<Map<String, Object>> matchingProducts = userNeedService.searchMatchingProducts(savedNeed);
 
         Map<String, Object> responseMap = new LinkedHashMap<>();
@@ -119,23 +149,33 @@ public class UserNeedController {
     
     
     @PostMapping("/with-organisations")
+    @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create need with organisations", description = "Create a need and attach it to the requested organisations")
     @Transactional
     public ResponseEntity<?> createNeedAndAttachToOrganisations(
-            @RequestBody @Valid CreateNeedWithOrganisationsRequest request) {
+            @RequestBody @Valid CreateNeedWithOrganisationsRequest request,
+            @AuthenticationPrincipal User currentUser) {
 
-        log.info("➡️ Received request (need + organisations): orgIds={}, need={}",
+        log.info("➡️ Received request (need + organisations): orgIds={}, need={}", 
                 request.organisationIds(), request.need());
 
+        if (request.need() != null && request.need().getUserId() != null && !request.need().getUserId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("The user_id in the payload does not match the authenticated user");
+        }
+
+        if (request.need() != null) {
+            request.need().setUserId(currentUser.getId());
+        }
+
         AbstractUserNeed savedNeed = userNeedService.createFromDto(request.need());
+        savedNeed.setUser(currentUser);
+        savedNeed = userNeedService.createNeed(savedNeed);
         log.info("✅ Need saved: id={}, type={}", savedNeed.getId(), savedNeed.getType());
 
-        // 2) Attach to organisations (owner side = Organisation)
         List<Organisation> attached = organisationService.attachNeedToOrganisations(
                 savedNeed, request.organisationIds());
 
-        // 4) Optional search for matching products
         List<Map<String, Object>> matchingProducts = userNeedService.searchMatchingProducts(savedNeed);
 
         Map<String, Object> resp = new LinkedHashMap<>();
@@ -175,10 +215,15 @@ public class UserNeedController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Delete need", description = "Delete a user need by ID")
-   // @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteNeed(@PathVariable Long id) {
+    public void deleteNeed(@PathVariable Long id,
+                          @AuthenticationPrincipal User currentUser) {
+        AbstractUserNeed need = userNeedService.getNeedById(id)
+            .orElseThrow(() -> new IllegalArgumentException("User need not found: " + id));
+
+        validateResourceOwnerOrThrow(need, currentUser);
         userNeedService.deleteNeed(id);
     }
 
