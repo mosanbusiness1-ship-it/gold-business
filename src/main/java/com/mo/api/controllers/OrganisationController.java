@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -315,7 +316,48 @@ public class OrganisationController {
     }
 
     // PRODUCT MANAGEMENT
-   
+    @PostMapping("/{orgId}/products/create")
+    @PreAuthorize("@organisationSecurity.isAllowedToAddProduct(authentication, #orgId)")
+    @Operation(
+        summary = "Create and attach a product to an organisation",
+        description = "Create a new product and associate it directly with the target organisation in a single call",
+        responses = {
+            @ApiResponse(responseCode = "201", description = "Product created and attached successfully"),
+            @ApiResponse(responseCode = "403", description = "Insufficient rights for this organisation"),
+            @ApiResponse(responseCode = "404", description = "Organisation not found")
+        }
+    )
+    public ResponseEntity<?> createProductInOrganisation(
+            @PathVariable Long orgId,
+            @RequestBody @Valid AbstractProductDto productDto,
+            @AuthenticationPrincipal User user) {
+
+        if (user == null) {
+            throw new AccessDeniedException("Authentication required");
+        }
+
+        if (productDto.getOwnerId() == null) {
+            productDto.setOwnerId(user.getId());
+        }
+
+        log.info("→ Creating and attaching product for organisationId={}, ownerId={}, productType={}", orgId, user.getId(), productDto.getType());
+
+        AbstractProduct createdProduct = productService.createFromDto(productDto);
+        Organisation organisation = organisationService.addProductToOrganisation(orgId, createdProduct.getId(), user.getId());
+
+        Set<JsonNode> productDtos = organisation.getProducts()
+            .stream()
+            .map(mapperVisitor::mapToDto)
+            .collect(Collectors.toSet());
+
+        OrganisationWithProductsDTO response = OrganisationWithProductsDTO.builder()
+            .organisation(orgProductMapper.toDto(organisation))
+            .products(productDtos)
+            .build();
+
+        log.info("✔ Product created and attached to organisation successfully: orgId={}, productId={}", orgId, createdProduct.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 
     @PostMapping("{orgId}/products")
     @PreAuthorize("@organisationSecurity.isAllowedToAddProduct(authentication, #orgId)")

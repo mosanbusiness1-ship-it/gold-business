@@ -3,13 +3,15 @@ package com.mo.core.eventsconsumers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mo.core.events.AuctionBidEvent;
 import com.mo.core.services.AuctionLiveUpdateService;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
+@AllArgsConstructor
 @Slf4j
 public class AuctionBidEventConsumer {
 
