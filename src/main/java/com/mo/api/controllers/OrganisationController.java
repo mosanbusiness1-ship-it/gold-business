@@ -193,6 +193,52 @@ public class OrganisationController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/{orgId}/with-products")
+    @PreAuthorize("permitAll()")
+    @Operation(summary = "Get organisation with paginated products", description = "Return one organisation and its paginated product list in a single payload")
+    public ResponseEntity<Map<String, Object>> getOrganisationWithProducts(
+            @PathVariable Long orgId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        if (page < 0) {
+            throw new IllegalArgumentException("Page index must be >= 0");
+        }
+        if (size <= 0) {
+            throw new IllegalArgumentException("Size must be > 0");
+        }
+
+        Organisation organisation = organisationService.getOrganisationById(orgId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organisation not found"));
+
+        List<AbstractProduct> products = organisation.getProducts() == null
+                ? List.of()
+                : new ArrayList<>(organisation.getProducts());
+
+        int fromIndex = page * size;
+        int toIndex = Math.min(fromIndex + size, products.size());
+
+        if (fromIndex >= products.size()) {
+            fromIndex = products.size();
+            toIndex = products.size();
+        }
+
+        List<AbstractProduct> pagedProducts = products.subList(fromIndex, toIndex);
+        List<JsonNode> productDtos = pagedProducts.stream()
+                .map(mapperVisitor::mapToDto)
+                .collect(Collectors.toList());
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("organisation", orgProductMapper.toDto(organisation));
+        response.put("products", productDtos);
+        response.put("page", page);
+        response.put("size", size);
+        response.put("totalElements", products.size());
+        response.put("totalPages", products.isEmpty() ? 0 : (int) Math.ceil((double) products.size() / size));
+
+        return ResponseEntity.ok(response);
+    }
+
     // Update an organisation: protected
     @PutMapping("/{id}")
     @PreAuthorize("@organisationSecurity.isAdminOfOrganisation(authentication, #id)")
