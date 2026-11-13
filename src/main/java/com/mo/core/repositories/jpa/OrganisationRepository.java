@@ -103,6 +103,9 @@ public interface OrganisationRepository extends JpaRepository<Organisation, Long
             @Param("name") String name,
             @Param("type") OrganisationType type,
             @Param("minProductCount") Long minProductCount);
+
+    @Query("SELECT o FROM Organisation o JOIN o.needs n WHERE n.id = :needId")
+    List<Organisation> findByNeedsId(@Param("needId") Long needId);
 }
 
 

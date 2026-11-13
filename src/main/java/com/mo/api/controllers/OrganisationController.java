@@ -239,6 +239,106 @@ public class OrganisationController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{orgId}/with-auctions")
+    @PreAuthorize("permitAll()")
+    @Operation(summary = "Get organisation with paginated auctions", description = "Return one organisation and the auctions linked to it through its needs in a single payload")
+    public ResponseEntity<Map<String, Object>> getOrganisationWithAuctions(
+            @PathVariable Long orgId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        if (page < 0) {
+            throw new IllegalArgumentException("Page index must be >= 0");
+        }
+        if (size <= 0) {
+            throw new IllegalArgumentException("Size must be > 0");
+        }
+
+        Organisation organisation = organisationService.getOrganisationById(orgId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organisation not found"));
+
+        List<com.mo.core.model.auctions.Auction> auctions = organisationService.getAuctionsByOrganisation(orgId);
+
+        int fromIndex = page * size;
+        int toIndex = Math.min(fromIndex + size, auctions.size());
+
+        if (fromIndex >= auctions.size()) {
+            fromIndex = auctions.size();
+            toIndex = auctions.size();
+        }
+
+        List<com.mo.core.model.auctions.Auction> pagedAuctions = auctions.subList(fromIndex, toIndex);
+        List<Map<String, Object>> auctionDtos = pagedAuctions.stream()
+                .map(auction -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("id", auction.getId());
+                    item.put("startedAt", auction.getStartedAt());
+                    item.put("endAt", auction.getEndAt());
+                    item.put("isActived", auction.isActived());
+                    item.put("createdAt", auction.getCreatedAt());
+                    item.put("updatedAt", auction.getUpdatedAt());
+                    item.put("need", auction.getNeed() != null ? needmapper.mapToDto(auction.getNeed()) : null);
+                    return item;
+                })
+                .collect(Collectors.toList());
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("organisation", orgProductMapper.toDto(organisation));
+        response.put("auctions", auctionDtos);
+        response.put("page", page);
+        response.put("size", size);
+        response.put("totalElements", auctions.size());
+        response.put("totalPages", auctions.isEmpty() ? 0 : (int) Math.ceil((double) auctions.size() / size));
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{orgId}/with-needs")
+    @PreAuthorize("permitAll()")
+    @Operation(summary = "Get organisation with paginated needs", description = "Return one organisation and the needs attached to it in a single payload")
+    public ResponseEntity<Map<String, Object>> getOrganisationWithNeeds(
+            @PathVariable Long orgId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        if (page < 0) {
+            throw new IllegalArgumentException("Page index must be >= 0");
+        }
+        if (size <= 0) {
+            throw new IllegalArgumentException("Size must be > 0");
+        }
+
+        Organisation organisation = organisationService.getOrganisationById(orgId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organisation not found"));
+
+        List<AbstractUserNeed> needs = organisation.getNeeds() == null
+                ? List.of()
+                : new ArrayList<>(organisation.getNeeds());
+
+        int fromIndex = page * size;
+        int toIndex = Math.min(fromIndex + size, needs.size());
+
+        if (fromIndex >= needs.size()) {
+            fromIndex = needs.size();
+            toIndex = needs.size();
+        }
+
+        List<AbstractUserNeed> pagedNeeds = needs.subList(fromIndex, toIndex);
+        List<Object> needDtos = pagedNeeds.stream()
+                .map(needmapper::mapToDto)
+                .collect(Collectors.toList());
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("organisation", orgProductMapper.toDto(organisation));
+        response.put("needs", needDtos);
+        response.put("page", page);
+        response.put("size", size);
+        response.put("totalElements", needs.size());
+        response.put("totalPages", needs.isEmpty() ? 0 : (int) Math.ceil((double) needs.size() / size));
+
+        return ResponseEntity.ok(response);
+    }
+
     // Update an organisation: protected
     @PutMapping("/{id}")
     @PreAuthorize("@organisationSecurity.isAdminOfOrganisation(authentication, #id)")

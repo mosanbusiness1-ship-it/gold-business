@@ -7,6 +7,7 @@ import com.mo.core.model.organisations.EscrowTransaction;
 import com.mo.core.repositories.jpa.OrganisationRepository;
 import com.mo.core.repositories.jpa.CommissionTransactionRepository;
 import com.mo.core.repositories.jpa.EscrowTransactionRepository;
+import com.mo.core.repositories.jpa.AuctionRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,7 +63,8 @@ public class OrganisationServiceEscrowTest {
             mock(com.mo.core.kafka.OrganisationValidationProducer.class),
             paymentProducer,
             mock(com.mo.core.repositories.jpa.GuaranteeClaimRepository.class),
-            escrowTransactionRepository
+            escrowTransactionRepository,
+            mock(AuctionRepository.class)
         );
     }
 
@@ -71,7 +73,6 @@ public class OrganisationServiceEscrowTest {
         Organisation org = Organisation.builder().id(42L).build();
         when(organisationRepository.findById(42L)).thenReturn(Optional.of(org));
 
-        ArgumentCaptor<EscrowTransaction> captor = ArgumentCaptor.forClass(EscrowTransaction.class);
         when(escrowTransactionRepository.save(any(EscrowTransaction.class)))
             .thenAnswer(inv -> {
                 EscrowTransaction e = inv.getArgument(0);
@@ -200,7 +201,8 @@ public class OrganisationServiceEscrowTest {
             mock(com.mo.core.kafka.OrganisationValidationProducer.class),
             paymentProducer,
             guaranteeClaimRepository,
-            escrowTransactionRepository
+            escrowTransactionRepository,
+            mock(AuctionRepository.class)
         );
 
         com.mo.core.model.organisations.GuaranteeClaim resolved = organisationService.resolveGuaranteeClaim(42L, "approved refund", 101L);

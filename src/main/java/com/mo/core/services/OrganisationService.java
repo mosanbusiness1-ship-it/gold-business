@@ -51,6 +51,7 @@ import com.mo.core.model.products.ServiceProduct;
 import com.mo.core.model.products.VehicleProduct;
 import com.mo.core.repositories.jpa.OrganisationMemberRepository;
 import com.mo.core.repositories.jpa.OrganisationRepository;
+import com.mo.core.repositories.jpa.AuctionRepository;
 import com.mo.core.repositories.jpa.OrganisationProductReviewRepository;
 import com.mo.core.repositories.jpa.OrganisationProductMetaRepository;
 import com.mo.core.repositories.jpa.OrganisationRatingSummaryRepository;
@@ -102,6 +103,7 @@ public class OrganisationService {
     private final com.mo.core.repositories.jpa.EscrowTransactionRepository escrowTransactionRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final AuctionRepository auctionRepository;
 
     private final CreateOrganisationMapper organisationMapper;
     private final VehicleProductMapper vehicleMapper;
@@ -137,7 +139,8 @@ public class OrganisationService {
                              OrganisationValidationProducer validationProducer,
                              com.mo.core.kafka.PaymentProducer paymentProducer,
                              com.mo.core.repositories.jpa.GuaranteeClaimRepository guaranteeClaimRepository,
-                             com.mo.core.repositories.jpa.EscrowTransactionRepository escrowTransactionRepository) {
+                             com.mo.core.repositories.jpa.EscrowTransactionRepository escrowTransactionRepository,
+                             AuctionRepository auctionRepository) {
         this.organisationRepository = organisationRepository;
 		this.organisationMemberRepository = organisationMemberRepository;
         this.productReviewRepository = productReviewRepository;
@@ -161,6 +164,7 @@ public class OrganisationService {
         this.validationProducer = validationProducer;
         this.paymentProducer = paymentProducer;
         this.escrowTransactionRepository = escrowTransactionRepository;
+        this.auctionRepository = auctionRepository;
     }
 
     /**
@@ -186,7 +190,7 @@ public class OrganisationService {
                               CommissionTransactionRepository commissionTransactionRepository,
                               OrganisationValidationProducer validationProducer,
                               com.mo.core.repositories.jpa.EscrowTransactionRepository escrowTransactionRepository) {
-        this(organisationRepository, userRepository, productRepository, organisationMapper, electronicMapper, fashionMapper, vehicleMapper, foodProductMapper, realEstateMapper, serviceMapper, jwtService, organisationMemberRepository, productReviewRepository, productMetaRepository, ratingSummaryRepository, organisationReviewRepository, guaranteePolicyRepository, null, commissionTransactionRepository, validationProducer, null, null, escrowTransactionRepository);
+        this(organisationRepository, userRepository, productRepository, organisationMapper, electronicMapper, fashionMapper, vehicleMapper, foodProductMapper, realEstateMapper, serviceMapper, jwtService, organisationMemberRepository, productReviewRepository, productMetaRepository, ratingSummaryRepository, organisationReviewRepository, guaranteePolicyRepository, null, commissionTransactionRepository, validationProducer, null, null, escrowTransactionRepository, null);
     }
 
         // Use the injected OrganisationMapper instance
@@ -1356,5 +1360,20 @@ public class OrganisationService {
            .inviterName(invitation.getInviter().getFullName())
            .inviterEmail(invitation.getInviter().getEmail())
            .build();
+   }
+
+   @Transactional(readOnly = true)
+   public List<Organisation> getOrganisationsByNeed(Long needId) {
+       return organisationRepository.findByNeedsId(needId);
+   }
+
+   @Transactional(readOnly = true)
+   public List<com.mo.core.model.auctions.Auction> getAuctionsByOrganisation(Long organisationId) {
+       Organisation organisation = organisationRepository.findById(organisationId)
+           .orElseThrow(() -> new EntityNotFoundException("Organisation not found"));
+       if (organisation.getNeeds() == null || organisation.getNeeds().isEmpty()) {
+           return new ArrayList<>();
+       }
+       return auctionRepository.findByOrganisationId(organisationId);
    }
 }

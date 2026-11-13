@@ -22,4 +22,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
     
     // Récupère toutes les enchères actives dont la date de fin est avant "dateTime"
     List<Auction> findByEndAtBeforeAndIsActivedTrue(LocalDateTime dateTime);
+
+    @Query("select a from Auction a join a.need n join n.organisations o where o.id = :orgId")
+    List<Auction> findByOrganisationId(@Param("orgId") Long orgId);
 }
