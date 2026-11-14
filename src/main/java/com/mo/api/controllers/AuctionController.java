@@ -345,13 +345,16 @@ public class AuctionController {
     private CreateAuctionDTO toDTO(Auction auction) {
         AbstractUserNeed need = auction.getNeed();
         CreateAuctionDTO dto = new CreateAuctionDTO();
+        dto.setId(auction.getId());
+        dto.setOwnerId(need != null && need.getUser() != null ? need.getUser().getId() : null);
         dto.setActived(auction.isActived());
         dto.setStartedAt(auction.getStartedAt());
         dto.setEndAt(auction.getEndAt());
-        dto.setNeedName(need.getName());
-        dto.setMaxPrice(need.getMaxPrice());
-        dto.setCurrency(need.getCurrency());
-        dto.setNeedDescription(need.getDescription());
+        dto.setNeedName(need != null ? need.getName() : null);
+        dto.setMaxPrice(need != null ? need.getMaxPrice() : null);
+        dto.setCurrency(need != null ? need.getCurrency() : null);
+        dto.setNeedDescription(need != null ? need.getDescription() : null);
+        dto.setNeedQuantity(need != null ? need.getQuantity() : 0);
         return dto;
     }
 

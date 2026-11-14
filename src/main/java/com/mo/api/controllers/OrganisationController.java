@@ -90,6 +90,11 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import com.mo.core.dtos.CreateAuctionDTO;
+import com.mo.core.dtos.auctions.AuctionRequest;
+import com.mo.core.model.auctions.Auction;
+import com.mo.core.services.AuctionService;
+
 @RestController
 @Tag(name = "Organisations", description = "Organisation management and trust features (reviews, ratings, validation)")
 @RequestMapping("/api/organisations")
@@ -101,6 +106,8 @@ public class OrganisationController {
 	private final ProductService productService;
 	
 	private final UserNeedService userNeedService;
+
+    private final AuctionService auctionService;
 
     private final OrganisationService organisationService;
     private final com.mo.core.services.WebhookService webhookService;
@@ -1192,6 +1199,38 @@ public class OrganisationController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
         } catch (IllegalStateException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+        }
+    }
+
+    /**
+     * POST /api/organisations/{orgId}/auctions - Create an auction for the organisation
+     */
+    @PostMapping("/{orgId}/auctions")
+    @PreAuthorize("@organisationSecurity.isOwnerOrAdmin(authentication, #orgId)")
+    @Operation(summary = "Create auction",
+               description = "Create a new auction for the organisation, attached to a specific need",
+               requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                   description = "Auction creation payload",
+                   required = true,
+                   content = @Content(mediaType = "application/json",
+                                      schema = @Schema(implementation = AuctionRequest.class),
+                                      examples = @ExampleObject(value = "{\"needId\":123,\"startingBid\":1000,\"reservePrice\":1500,\"endTime\":\"2023-12-31T23:59:59Z\"}")
+                   )
+               ),
+               responses = {@ApiResponse(responseCode = "201", description = "Auction created"), @ApiResponse(responseCode = "404", description = "Organisation or need not found")})
+    public ResponseEntity<?> createAuction(
+            @PathVariable Long orgId,
+            @RequestBody @Valid AuctionRequest request,
+            @AuthenticationPrincipal User user) {
+
+        try {
+            // Validate and create the auction
+            Auction auction = auctionService.createAuctionForOrganisation(orgId, request, user.getId());
+            return ResponseEntity.status(HttpStatus.CREATED).body(auction);
+        } catch (EntityNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
         }
     }
 }
