@@ -18,7 +18,9 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
  * - `name` (String): organisation name.
  * - `type` (OrganisationType): classification.
  * - `productIds` (Set<Long>): ids of products managed by this org.
+ * - `needIds` (Set<Long>): ids of needs attached to this org.
  * - `childrenIds` (List<Long>): ids of child organisations (hierarchical structure).
+ * - `auctionIds` (List<Long>): ids of auctions linked to the org through its needs.
  *
  * Frontend guidance:
  * - Use to render organisation cards in list views.
@@ -30,5 +32,7 @@ public record OrganisationDTO(
     String name,
     OrganisationType type,
     Set<Long> productIds,
-    List<Long> childrenIds
+    List<Long> childrenIds,
+    Set<Long> needIds,
+    List<Long> auctionIds
 ) {}

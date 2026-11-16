@@ -125,6 +125,44 @@ public class OrganisationController {
     
     private static final Logger log = LoggerFactory.getLogger(OrganisationController.class);
     
+    private OrganisationDTO buildOrganisationSummary(Organisation organisation, Long orgId) {
+        Set<Long> productIds = organisation.getProducts() == null
+                ? Set.of()
+                : organisation.getProducts().stream()
+                    .map(AbstractProduct::getId)
+                    .filter(id -> id != null)
+                    .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
+
+        Set<Long> needIds = organisation.getNeeds() == null
+                ? Set.of()
+                : organisation.getNeeds().stream()
+                    .map(AbstractUserNeed::getId)
+                    .filter(id -> id != null)
+                    .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
+
+        List<Long> childIds = organisation.getChildren() == null
+                ? List.of()
+                : organisation.getChildren().stream()
+                    .map(c -> c.getId())
+                    .filter(id -> id != null)
+                    .toList();
+
+        List<Long> auctionIds = organisationService.getAuctionsByOrganisation(orgId).stream()
+                .map(Auction::getId)
+                .filter(id -> id != null)
+                .toList();
+
+        return new OrganisationDTO(
+                organisation.getId(),
+                organisation.getName(),
+                organisation.getType(),
+                productIds,
+                childIds,
+                needIds,
+                auctionIds
+        );
+    }
+    
     // Creation endpoint accessible (default)
     @PostMapping
     @Operation(
@@ -236,7 +274,7 @@ public class OrganisationController {
                 .collect(Collectors.toList());
 
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("organisation", orgProductMapper.toDto(organisation));
+        response.put("organisation", buildOrganisationSummary(organisation, orgId));
         response.put("products", productDtos);
         response.put("page", page);
         response.put("size", size);
@@ -290,7 +328,7 @@ public class OrganisationController {
                 .collect(Collectors.toList());
 
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("organisation", orgProductMapper.toDto(organisation));
+        response.put("organisation", buildOrganisationSummary(organisation, orgId));
         response.put("auctions", auctionDtos);
         response.put("page", page);
         response.put("size", size);
@@ -336,7 +374,7 @@ public class OrganisationController {
                 .collect(Collectors.toList());
 
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("organisation", orgProductMapper.toDto(organisation));
+        response.put("organisation", buildOrganisationSummary(organisation, orgId));
         response.put("needs", needDtos);
         response.put("page", page);
         response.put("size", size);

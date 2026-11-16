@@ -61,6 +61,8 @@ import com.mo.core.enums.ProductType;
  */
 public abstract class AbstractProductDto {
 
+    private Long id;
+
     @JsonProperty("owner_id")
     private Long ownerId;
 

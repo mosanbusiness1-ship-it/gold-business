@@ -37,7 +37,7 @@ public class ProductMapperJackson {
         }
 
         try {
-            return switch (product.getType().name()) {
+            AbstractProductDto dto = switch (product.getType().name()) {
                 case "VEHICLE" -> vehicleMapper.toDto((VehicleProduct) product);
                 case "FASHION" -> fashionMapper.toDto((FashionProduct) product);
                 case "FOOD" -> foodMapper.toDto((FoodProduct) product);
@@ -46,6 +46,12 @@ public class ProductMapperJackson {
                 case "SERVICE" -> serviceMapper.toDto((ServiceProduct) product);
                 default -> throw new IllegalArgumentException("Type de produit inconnu : " + product.getType());
             };
+
+            if (dto != null) {
+                dto.setId(product.getId());
+            }
+
+            return dto;
         } catch (ClassCastException e) {
             throw new IllegalArgumentException("Erreur de cast du produit selon son type : " + product.getType(), e);
         }
