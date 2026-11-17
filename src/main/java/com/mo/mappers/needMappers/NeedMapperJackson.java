@@ -37,33 +37,40 @@ public class NeedMapperJackson {
         }
 
         try {
-            return switch (Need.getType().name()) {
+            JsonNode jsonNode = switch (Need.getType().name()) {
                 case "VEHICLE" -> {
                     VehicleNeedDto dto = vehicleMapper.toDto((VehicleNeed) Need);
+                    dto.setId(Need.getId());
                     yield objectMapper.valueToTree(dto);
                 }
                 case "FASHION" -> {
                     FashionNeedDto dto = fashionMapper.toDto((FashionNeed) Need);
+                    dto.setId(Need.getId());
                     yield objectMapper.valueToTree(dto);
                 }
                 case "FOOD" -> {
                     FoodNeedDto dto = foodMapper.toDto((FoodNeed) Need);
+                    dto.setId(Need.getId());
                     yield objectMapper.valueToTree(dto);
                 }
                 case "ELECTRONIC" -> {
                     ElectronicNeedDto dto = electronicMapper.toDto((ElectronicNeed) Need);
+                    dto.setId(Need.getId());
                     yield objectMapper.valueToTree(dto);
                 }
                 case "REALESTATE" -> {
                     RealEstateNeedDto dto = realEstateMapper.toDto((RealEstateNeed) Need);
+                    dto.setId(Need.getId());
                     yield objectMapper.valueToTree(dto);
                 }
                 case "SERVICE" -> {
                     ServiceNeedDto dto = serviceMapper.toDto((ServiceNeed) Need);
+                    dto.setId(Need.getId());
                     yield objectMapper.valueToTree(dto);
                 }
                 default -> throw new IllegalArgumentException("Type de produit inconnu : " + Need.getType());
             };
+            return jsonNode;
         } catch (ClassCastException e) {
             throw new IllegalArgumentException("Erreur de cast du produit selon son type : " + Need.getType(), e);
         }

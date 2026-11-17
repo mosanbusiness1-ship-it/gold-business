@@ -52,6 +52,7 @@ import lombok.NoArgsConstructor;
  */
 public abstract class AbstractUserNeedDto {
 
+    private Long id;
 
     private String name;
 
