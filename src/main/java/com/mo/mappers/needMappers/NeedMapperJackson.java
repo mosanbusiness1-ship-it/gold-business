@@ -31,48 +31,27 @@ public class NeedMapperJackson {
     }
     
 
-    public JsonNode mapToDto(AbstractUserNeed Need) {
-        if (Need == null) {
+    public JsonNode mapToDto(AbstractUserNeed need) {
+        if (need == null) {
             return null;
         }
 
         try {
-            JsonNode jsonNode = switch (Need.getType().name()) {
-                case "VEHICLE" -> {
-                    VehicleNeedDto dto = vehicleMapper.toDto((VehicleNeed) Need);
-                    dto.setId(Need.getId());
-                    yield objectMapper.valueToTree(dto);
-                }
-                case "FASHION" -> {
-                    FashionNeedDto dto = fashionMapper.toDto((FashionNeed) Need);
-                    dto.setId(Need.getId());
-                    yield objectMapper.valueToTree(dto);
-                }
-                case "FOOD" -> {
-                    FoodNeedDto dto = foodMapper.toDto((FoodNeed) Need);
-                    dto.setId(Need.getId());
-                    yield objectMapper.valueToTree(dto);
-                }
-                case "ELECTRONIC" -> {
-                    ElectronicNeedDto dto = electronicMapper.toDto((ElectronicNeed) Need);
-                    dto.setId(Need.getId());
-                    yield objectMapper.valueToTree(dto);
-                }
-                case "REALESTATE" -> {
-                    RealEstateNeedDto dto = realEstateMapper.toDto((RealEstateNeed) Need);
-                    dto.setId(Need.getId());
-                    yield objectMapper.valueToTree(dto);
-                }
-                case "SERVICE" -> {
-                    ServiceNeedDto dto = serviceMapper.toDto((ServiceNeed) Need);
-                    dto.setId(Need.getId());
-                    yield objectMapper.valueToTree(dto);
-                }
-                default -> throw new IllegalArgumentException("Type de produit inconnu : " + Need.getType());
+            AbstractUserNeedDto dto = switch (need.getType().name()) {
+                case "VEHICLE" -> vehicleMapper.toDto((VehicleNeed) need);
+                case "FASHION" -> fashionMapper.toDto((FashionNeed) need);
+                case "FOOD" -> foodMapper.toDto((FoodNeed) need);
+                case "ELECTRONIC" -> electronicMapper.toDto((ElectronicNeed) need);
+                case "REALESTATE" -> realEstateMapper.toDto((RealEstateNeed) need);
+                case "SERVICE" -> serviceMapper.toDto((ServiceNeed) need);
+                default -> throw new IllegalArgumentException("Type de besoin inconnu : " + need.getType());
             };
-            return jsonNode;
+
+            dto.setId(need.getId());
+            dto.setTechnicalSheet(need.getTechnicalSheet());
+            return objectMapper.valueToTree(dto);
         } catch (ClassCastException e) {
-            throw new IllegalArgumentException("Erreur de cast du produit selon son type : " + Need.getType(), e);
+            throw new IllegalArgumentException("Erreur de cast du besoin selon son type : " + need.getType(), e);
         }
     }
 

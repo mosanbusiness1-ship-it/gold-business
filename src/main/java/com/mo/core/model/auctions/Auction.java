@@ -3,6 +3,9 @@ package com.mo.core.model.auctions;
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Map;
+import com.mo.core.dtos.JsonMapConverter;
+import jakarta.persistence.Convert;
 
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -74,6 +77,11 @@ public class Auction {
     private LocalDateTime endAt;
 
     private boolean isActived;
+
+    @Convert(converter = JsonMapConverter.class)
+    @jakarta.persistence.Column(name = "technical_sheet", columnDefinition = "TEXT")
+    @JsonProperty("technical_sheet")
+    private Map<String, Object> technicalSheet = new java.util.LinkedHashMap<>();
 
     @CreationTimestamp
     @JsonProperty("created_at")

@@ -8,6 +8,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import com.mo.core.enums.Currency;
 import io.swagger.v3.oas.annotations.media.Schema;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -101,4 +102,6 @@ public abstract class AbstractProductDto {
 
     private Boolean certified;
 
+    @JsonProperty("technical_sheet")
+    private Map<String, Object> technicalSheet;
 }

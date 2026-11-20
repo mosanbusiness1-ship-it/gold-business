@@ -133,6 +133,7 @@ public class AuctionController {
         auction.setEndAt(request.getEndAt());
         auction.setActived(request.isActived());
         auction.setNeed(savedNeed);
+        auction.setTechnicalSheet(request.getTechnicalSheet());
 
         CreateAuctionDTO savedAuction = auctionService.save(auction);
         return ResponseEntity.ok(savedAuction);
@@ -355,6 +356,7 @@ public class AuctionController {
         dto.setCurrency(need != null ? need.getCurrency() : null);
         dto.setNeedDescription(need != null ? need.getDescription() : null);
         dto.setNeedQuantity(need != null ? need.getQuantity() : 0);
+        dto.setTechnicalSheet(auction.getTechnicalSheet());
         return dto;
     }
 

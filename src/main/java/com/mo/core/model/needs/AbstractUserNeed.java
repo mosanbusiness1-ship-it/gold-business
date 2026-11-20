@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.mo.auth.User;
 import com.mo.core.documents.needs.AbstractUserNeedDocument;
+import com.mo.core.dtos.JsonMapConverter;
 import com.mo.core.enums.Currency;
 import com.mo.core.enums.NeedType;
 import com.mo.core.enums.ProductType;
@@ -23,6 +24,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.HashSet;
@@ -108,6 +110,12 @@ public abstract class AbstractUserNeed {
     @JsonIgnore
     private Set<Organisation> organisations = new HashSet<>();
 
+    @ToString.Include
+    @Convert(converter = JsonMapConverter.class)
+    @Column(name = "technical_sheet", columnDefinition = "TEXT")
+    @JsonProperty("technical_sheet")
+    private Map<String, Object> technicalSheet = new java.util.LinkedHashMap<>();
+    
 
     @ToString.Include
     @JsonProperty("created_at")

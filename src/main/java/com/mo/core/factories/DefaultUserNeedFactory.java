@@ -48,22 +48,34 @@ public class DefaultUserNeedFactory implements UserNeedFactory {
         }
 
         if (dto instanceof VehicleNeedDto vehicleDto) {
-            return vehicleMapper.toEntity(vehicleDto);
+            AbstractUserNeed need = vehicleMapper.toEntity(vehicleDto);
+            need.setTechnicalSheet(dto.getTechnicalSheet());
+            return need;
         }
         if (dto instanceof FashionNeedDto fashionDto) {
-            return fashionMapper.toEntity(fashionDto);
+            AbstractUserNeed need = fashionMapper.toEntity(fashionDto);
+            need.setTechnicalSheet(dto.getTechnicalSheet());
+            return need;
         }
         if (dto instanceof FoodNeedDto foodDto) {
-            return foodMapper.toEntity(foodDto);
+            AbstractUserNeed need = foodMapper.toEntity(foodDto);
+            need.setTechnicalSheet(dto.getTechnicalSheet());
+            return need;
         }
         if (dto instanceof ElectronicNeedDto electronicDto) {
-            return electronicMapper.toEntity(electronicDto);
+            AbstractUserNeed need = electronicMapper.toEntity(electronicDto);
+            need.setTechnicalSheet(dto.getTechnicalSheet());
+            return need;
         }
         if (dto instanceof RealEstateNeedDto realEstateDto) {
-            return realEstateMapper.toEntity(realEstateDto);
+            AbstractUserNeed need = realEstateMapper.toEntity(realEstateDto);
+            need.setTechnicalSheet(dto.getTechnicalSheet());
+            return need;
         }
         if (dto instanceof ServiceNeedDto serviceDto) {
-            return serviceMapper.toEntity(serviceDto);
+            AbstractUserNeed need = serviceMapper.toEntity(serviceDto);
+            need.setTechnicalSheet(dto.getTechnicalSheet());
+            return need;
         }
 
         throw new IllegalArgumentException("Unsupported user need DTO type: " + dto.getClass().getName());

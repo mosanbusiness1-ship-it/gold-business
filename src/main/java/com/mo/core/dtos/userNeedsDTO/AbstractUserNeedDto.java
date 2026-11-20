@@ -3,6 +3,7 @@ package com.mo.core.dtos.userNeedsDTO;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -75,5 +76,7 @@ public abstract class AbstractUserNeedDto {
     @Schema(description = "ISO 4217 currency code", example = "XAF")
     private Currency currency;
 
+    @JsonProperty("technical_sheet")
+    private Map<String, Object> technicalSheet;
 }
 

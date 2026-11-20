@@ -2,6 +2,8 @@ package com.mo.core.dtos;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mo.auth.User;
 import com.mo.core.enums.Currency;
@@ -69,5 +71,8 @@ private int needQuantity;
 
 //@JsonProperty("need_escription")
 private String needDescription;
+
+@JsonProperty("technical_sheet")
+private Map<String, Object> technicalSheet;
 
 }

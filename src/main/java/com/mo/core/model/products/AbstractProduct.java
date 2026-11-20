@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.mo.auth.User;
+import com.mo.core.dtos.JsonMapConverter;
 import com.mo.core.enums.Currency;
 import com.mo.core.enums.ProductType;
 import com.mo.core.visitors.product_visitors.ProductVisitor;
@@ -22,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
@@ -130,6 +132,21 @@ public abstract class AbstractProduct {
 
         public <T> T accept(ProductVisitor<T> visitor) {
         return visitor.visit(this);
+    }
+
+    @ToString.Include
+    @Convert(converter = JsonMapConverter.class)
+    @Column(name = "technical_sheet", columnDefinition = "TEXT")
+    @JsonProperty("technical_sheet")
+    private Map<String, Object> technicalSheet = new java.util.LinkedHashMap<>();
+
+    // Getter et Setter pour technicalSheet
+    public Map<String, Object> getTechnicalSheet() {
+        return technicalSheet;
+    }
+
+    public void setTechnicalSheet(Map<String, Object> technicalSheet) {
+        this.technicalSheet = technicalSheet;
     }
 }
 

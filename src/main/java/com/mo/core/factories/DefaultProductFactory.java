@@ -48,22 +48,34 @@ public class DefaultProductFactory implements ProductFactory {
         }
 
         if (dto instanceof VehicleProductDto vehicleDto) {
-            return vehicleMapper.toEntity(vehicleDto);
+            AbstractProduct product = vehicleMapper.toEntity(vehicleDto);
+            product.setTechnicalSheet(dto.getTechnicalSheet());
+            return product;
         }
         if (dto instanceof FashionProductDto fashionDto) {
-            return fashionMapper.toEntity(fashionDto);
+            AbstractProduct product = fashionMapper.toEntity(fashionDto);
+            product.setTechnicalSheet(dto.getTechnicalSheet());
+            return product;
         }
         if (dto instanceof FoodProductDto foodDto) {
-            return foodMapper.toEntity(foodDto);
+            AbstractProduct product = foodMapper.toEntity(foodDto);
+            product.setTechnicalSheet(dto.getTechnicalSheet());
+            return product;
         }
         if (dto instanceof ElectronicProductDto electronicDto) {
-            return electronicMapper.toEntity(electronicDto);
+            AbstractProduct product = electronicMapper.toEntity(electronicDto);
+            product.setTechnicalSheet(dto.getTechnicalSheet());
+            return product;
         }
         if (dto instanceof RealEstateProductDto realEstateDto) {
-            return realEstateMapper.toEntity(realEstateDto);
+            AbstractProduct product = realEstateMapper.toEntity(realEstateDto);
+            product.setTechnicalSheet(dto.getTechnicalSheet());
+            return product;
         }
         if (dto instanceof ServiceProductDto serviceDto) {
-            return serviceMapper.toEntity(serviceDto);
+            AbstractProduct product = serviceMapper.toEntity(serviceDto);
+            product.setTechnicalSheet(dto.getTechnicalSheet());
+            return product;
         }
 
         throw new IllegalArgumentException("Unsupported product DTO type: " + dto.getClass().getName());

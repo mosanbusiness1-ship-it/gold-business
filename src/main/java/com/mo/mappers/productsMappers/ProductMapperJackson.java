@@ -49,6 +49,7 @@ public class ProductMapperJackson {
 
             if (dto != null) {
                 dto.setId(product.getId());
+                dto.setTechnicalSheet(product.getTechnicalSheet());
             }
 
             return dto;

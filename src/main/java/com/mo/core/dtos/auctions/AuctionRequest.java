@@ -1,6 +1,7 @@
 package com.mo.core.dtos.auctions;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import com.mo.core.dtos.userNeedsDTO.AbstractUserNeedDto;
 
@@ -45,4 +46,6 @@ public class AuctionRequest {
 
     private AbstractUserNeedDto need;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("technical_sheet")
+    private Map<String, Object> technicalSheet;
 }
