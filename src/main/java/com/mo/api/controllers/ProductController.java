@@ -265,4 +265,13 @@ public ResponseEntity<CreateProductResponseDto> createProduct(@RequestBody Abstr
         List<Map<String, Object>> results = elasticsearchService.searchProductsByKeywords(keywords);
         return ResponseEntity.ok(results);
     }
+
+    // Besoins correspondant au produit
+    @GetMapping("/{id}/matching-needs")
+    @PreAuthorize("permitAll()")
+    @Operation(summary = "Get matching needs", description = "Return strict and similar needs matching the product")
+    public Map<String, Object> getMatchingNeeds(@PathVariable Long id) {
+        AbstractProduct product = service.getProductById(id);
+        return service.searchMatchingNeeds(product);
+    }
 }

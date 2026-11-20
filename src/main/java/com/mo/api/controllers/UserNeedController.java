@@ -236,6 +236,16 @@ public class UserNeedController {
     public List<AbstractProduct> getMatchingProducts(@PathVariable Long userId) {
         return userNeedService.findMatchingProductsForUser(userId);
     }
+
+    // Produits correspondant à un besoin précis
+    @GetMapping("/{id}/matching-products")
+    @PreAuthorize("permitAll()")
+    @Operation(summary = "Get need matching products", description = "Return products matching the specified need")
+    public List<Map<String, Object>> getMatchingProductsForNeed(@PathVariable Long id) {
+        AbstractUserNeed need = userNeedService.getNeedById(id)
+            .orElseThrow(() -> new IllegalArgumentException("User need not found: " + id));
+        return userNeedService.searchMatchingProducts(need);
+    }
 }
 
 

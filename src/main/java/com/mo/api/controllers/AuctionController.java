@@ -54,6 +54,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -372,5 +373,18 @@ public class AuctionController {
     public ResponseEntity<AuctionSummaryDTO> getAuctionSummary(@PathVariable Long auctionId) {
         AuctionSummaryDTO summary = auctionLiveUpdateService.buildSummary(auctionId);
         return ResponseEntity.ok(summary);
+    }
+
+    // 8️⃣ Récupérer les besoins correspondants à une enchère
+    @GetMapping("/{auctionId}/matching-needs")
+    @Operation(summary = "Get auction matching needs", description = "Return strict and similar needs matching the auction need")
+    public ResponseEntity<Map<String, Object>> getMatchingNeeds(@PathVariable Long auctionId) {
+        Auction auction = auctionService.findById(auctionId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Auction not found"));
+        if (auction.getNeed() == null) {
+            return ResponseEntity.ok(Map.of("strictlyMatchingNeeds", List.of(), "similarNeeds", List.of()));
+        }
+        Map<String, Object> matches = needService.searchMatchingNeedsForProductQuery(auction.getNeed());
+        return ResponseEntity.ok(matches);
     }
 }

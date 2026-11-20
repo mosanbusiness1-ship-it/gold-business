@@ -218,6 +218,39 @@ public class UserNeedService {
 	 
 }
 
+    public Map<String, Object> searchMatchingNeedsForProductQuery(AbstractUserNeed need) {
+        if (need == null) {
+            return java.util.Map.of("strictlyMatchingNeeds", List.of(), "similarNeeds", List.of());
+        }
 
+        UserNeedVisitor<Criteria> matchingVisitor = visitorRegistry.getVisitorTyped("matchingVisitorForNeeds");
+        if (matchingVisitor == null) {
+            log.error("Aucun visitor trouvé pour matchingVisitorForNeeds");
+            return java.util.Map.of("strictlyMatchingNeeds", List.of(), "similarNeeds", List.of());
+        }
+
+        Criteria criteria = need.accept(matchingVisitor);
+        CriteriaQuery searchQuery = new CriteriaQuery(criteria);
+        searchQuery.setPageable(org.springframework.data.domain.PageRequest.of(0, 20));
+        String needIndex = determineIndexNameForNeedType(need.getType());
+
+        try {
+            List<Map<String, Object>> matches = elasticsearchOperations
+                .search(searchQuery, Map.class, IndexCoordinates.of(needIndex))
+                .getSearchHits()
+                .stream()
+                .map(hit -> (Map<String, Object>) hit.getContent())
+                .filter(candidate -> !candidate.containsKey("id") || !String.valueOf(candidate.get("id")).equals(String.valueOf(need.getId())))
+                .collect(java.util.stream.Collectors.toList());
+
+            Map<String, Object> result = new java.util.LinkedHashMap<>();
+            result.put("strictlyMatchingNeeds", matches);
+            result.put("similarNeeds", List.of());
+            return result;
+        } catch (Exception e) {
+            log.error("Erreur ES lors de la recherche des needs associés à une auction: {}", e.getMessage(), e);
+            return java.util.Map.of("strictlyMatchingNeeds", List.of(), "similarNeeds", List.of());
+        }
+    }
 }
 
