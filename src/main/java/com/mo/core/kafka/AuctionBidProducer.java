@@ -10,17 +10,27 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class AuctionBidProducer {
 
-    private final KafkaTemplate<String, Object> objectKafkaTemplate;
+    private final KafkaTemplate<String, AuctionBidEvent> kafkaTemplate;
 
     @Value("${kafka.topics.auction-bid-events:auction-bid-events}")
     private String auctionBidEventsTopic;
 
-    public AuctionBidProducer(KafkaTemplate<String, Object> objectKafkaTemplate) {
-        this.objectKafkaTemplate = objectKafkaTemplate;
+    public AuctionBidProducer(KafkaTemplate<String, AuctionBidEvent> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     public void publishBidEvent(AuctionBidEvent event) {
-        objectKafkaTemplate.send(auctionBidEventsTopic, String.valueOf(event.getAuctionId()), event);
-        log.info("[KAFKA_AUCTION_BID] published event for auction {} with amount {}", event.getAuctionId(), event.getAmount());
+        kafkaTemplate.send(auctionBidEventsTopic,
+                String.valueOf(event.getAuctionId()), event)
+            .whenComplete((result, ex) -> {
+                if (ex != null) {
+                    log.error("[KAFKA_AUCTION_BID] failed to publish event for auction {}", event.getAuctionId(), ex);
+                } else {
+                    log.info("[KAFKA_AUCTION_BID] published event for auction {} partition={} offset={}",
+                        event.getAuctionId(),
+                        result.getRecordMetadata().partition(),
+                        result.getRecordMetadata().offset());
+                }
+            });
     }
 }

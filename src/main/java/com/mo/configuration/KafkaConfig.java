@@ -1,9 +1,9 @@
 package com.mo.configuration;
 
+import com.mo.core.events.AuctionBidEvent;
 import com.mo.core.events.OrganisationProductValidationEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -91,6 +91,32 @@ public class KafkaConfig {
     @Bean
     public KafkaTemplate<String, com.mo.core.events.PaymentRequestEvent> paymentKafkaTemplate() {
         return new KafkaTemplate<>(paymentProducerFactory());
+    }
+
+    /**
+     * Producer factory for auction bid events
+     */
+    @Bean
+    public ProducerFactory<String, AuctionBidEvent> auctionBidProducerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+            org.apache.kafka.common.serialization.StringSerializer.class);
+        configProps.put(org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+            JsonSerializer.class);
+        configProps.put(org.apache.kafka.clients.producer.ProducerConfig.ACKS_CONFIG, "all");
+        configProps.put(org.apache.kafka.clients.producer.ProducerConfig.RETRIES_CONFIG, 3);
+        configProps.put(org.apache.kafka.clients.producer.ProducerConfig.LINGER_MS_CONFIG, 10);
+        addSecurityProperties(configProps);
+        return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    /**
+     * Kafka template for sending auction bid events
+     */
+    @Bean
+    public KafkaTemplate<String, AuctionBidEvent> auctionBidKafkaTemplate() {
+        return new KafkaTemplate<>(auctionBidProducerFactory());
     }
 
     /**
