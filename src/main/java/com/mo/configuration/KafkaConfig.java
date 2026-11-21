@@ -43,6 +43,12 @@ public class KafkaConfig {
     @Value("${spring.kafka.sasl.jaas.config:}")
     private String saslJaasConfig;
 
+    @Value("${spring.kafka.ssl.trust-store-location:/app/aiven-truststore.jks}")
+    private String trustStoreLocation;
+
+    @Value("${spring.kafka.ssl.trust-store-password:changeit}")
+    private String trustStorePassword;
+
     /**
      * Producer factory for serializing organisation validation events to JSON
      */
@@ -163,6 +169,11 @@ public class KafkaConfig {
             configProps.put("sasl.mechanism", saslMechanism);
             if (saslJaasConfig != null && !saslJaasConfig.isBlank()) {
                 configProps.put("sasl.jaas.config", saslJaasConfig);
+            }
+            if (trustStoreLocation != null && !trustStoreLocation.isBlank()) {
+                configProps.put("ssl.truststore.location", trustStoreLocation);
+                configProps.put("ssl.truststore.password", trustStorePassword);
+                configProps.put("ssl.truststore.type", "JKS");
             }
         }
     }

@@ -28,6 +28,12 @@ public class KafkaProducerConfig {
     @Value("${spring.kafka.sasl.jaas.config:}")
     private String saslJaasConfig;
     
+    @Value("${spring.kafka.ssl.trust-store-location:/app/aiven-truststore.jks}")
+    private String trustStoreLocation;
+
+    @Value("${spring.kafka.ssl.trust-store-password:changeit}")
+    private String trustStorePassword;
+    
     @Bean
     public ProducerFactory<String, String> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
@@ -40,6 +46,8 @@ public class KafkaProducerConfig {
             configProps.put("security.protocol", securityProtocol);
             configProps.put("sasl.mechanism", saslMechanism);
             configProps.put("sasl.jaas.config", saslJaasConfig);
+            configProps.put("ssl.truststore.location", trustStoreLocation);
+            configProps.put("ssl.truststore.password", trustStorePassword);
         }
         
         return new DefaultKafkaProducerFactory<>(configProps);
@@ -63,6 +71,8 @@ public class KafkaProducerConfig {
             configProps.put("security.protocol", securityProtocol);
             configProps.put("sasl.mechanism", saslMechanism);
             configProps.put("sasl.jaas.config", saslJaasConfig);
+            configProps.put("ssl.truststore.location", trustStoreLocation);
+            configProps.put("ssl.truststore.password", trustStorePassword);
         }
         
         return new DefaultKafkaProducerFactory<>(configProps);

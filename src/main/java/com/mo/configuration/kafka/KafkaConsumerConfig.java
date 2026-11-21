@@ -27,6 +27,12 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.sasl.jaas.config:}")
     private String saslJaasConfig;
 
+    @Value("${spring.kafka.ssl.trust-store-location:/app/aiven-truststore.jks}")
+    private String trustStoreLocation;
+
+    @Value("${spring.kafka.ssl.trust-store-password:changeit}")
+    private String trustStorePassword;
+
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
         Map<String, Object> configProps = new HashMap<>();
@@ -40,6 +46,18 @@ public class KafkaConsumerConfig {
             configProps.put("security.protocol", securityProtocol);
             configProps.put("sasl.mechanism", saslMechanism);
             configProps.put("sasl.jaas.config", saslJaasConfig);
+        }
+        
+        // Add SSL configuration if trust store location is provided
+        if (trustStoreLocation != null && !trustStoreLocation.isEmpty()) {
+            configProps.put("ssl.truststore.location", trustStoreLocation);
+            configProps.put("ssl.truststore.password", trustStorePassword);
+        }
+        
+        // Add TLS parameters for SASL_SSL
+        if ("SASL_SSL".equals(securityProtocol)) {
+            configProps.put("ssl.endpoint.identification.algorithm", "https");
+            configProps.put("sasl.ssl.enabled", "true");
         }
         
         return new DefaultKafkaConsumerFactory<>(configProps);

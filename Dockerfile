@@ -22,6 +22,9 @@ WORKDIR /app
 # JAR généré par Maven
 COPY --from=build /app/target/gold-business-0.0.1-SNAPSHOT.jar /app/app.jar
 
+# Truststore TLS Aiven, nécessaire pour SASL_SSL sur Render
+COPY src/main/resources/aiven-truststore.jks /app/aiven-truststore.jks
+
 ARG AUTO_UPDATE_DATABASE=true
 ENV AUTO_UPDATE_DATABASE=${AUTO_UPDATE_DATABASE}
 ENV APP_KAFKA_ENABLED=true
