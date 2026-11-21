@@ -7,6 +7,9 @@ import com.mo.core.model.organisations.Organisation;
 import com.mo.core.model.products.AbstractProduct;
 import com.mo.core.services.OrganisationService;
 import com.mo.core.services.UserNeedService;
+import com.mo.core.services.NeedOfferService;
+import com.mo.core.model.needs.NeedOffer;
+import com.mo.core.dtos.CreateNeedOfferRequest;
 import com.mo.mappers.needMappers.NeedMapperJackson;
 import com.mo.auth.User;
 
@@ -37,15 +40,18 @@ public class UserNeedController {
     private final UserNeedService userNeedService;
     private final OrganisationService organisationService;
     private final NeedMapperJackson needmapper;
+    private final NeedOfferService needOfferService;
 
     public UserNeedController(
         UserNeedService userNeedService,
         NeedMapperJackson needmapper,
-        OrganisationService organisationService
+        OrganisationService organisationService,
+        NeedOfferService needOfferService
     ) {
         this.userNeedService = userNeedService;
         this.needmapper = needmapper;
         this.organisationService = organisationService;
+        this.needOfferService = needOfferService;
     }
 
 
@@ -184,6 +190,26 @@ public class UserNeedController {
         resp.put("matchingProducts", matchingProducts);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+    }
+
+    @PostMapping("/{needId}/offers")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<NeedOffer> createOffer(@PathVariable Long needId,
+                                                 @RequestBody @Valid CreateNeedOfferRequest request,
+                                                 @AuthenticationPrincipal User currentUser) {
+        NeedOffer offer = needOfferService.createOffer(
+                needId,
+                request.productId(),
+                request.organisationId(),
+                currentUser,
+                request.message());
+        return ResponseEntity.status(HttpStatus.CREATED).body(offer);
+    }
+
+    @GetMapping("/{needId}/offers")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<List<NeedOffer>> getOffers(@PathVariable Long needId) {
+        return ResponseEntity.ok(needOfferService.getOffersForNeed(needId));
     }
 
 

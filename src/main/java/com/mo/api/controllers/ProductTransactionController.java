@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -42,9 +43,9 @@ public class ProductTransactionController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductTransaction.class))
         )
     )
-    public ResponseEntity<ProductTransaction> buyProduct(@PathVariable Long productId, Principal principal) {
+    public ResponseEntity<ProductTransaction> buyProduct(@PathVariable Long productId, Principal principal, @RequestParam Long organizationId) {
         User buyer = userService.findByEmail(principal.getName());
-        ProductTransaction tx = transactionService.createTransaction(productId, buyer.getId());
+        ProductTransaction tx = transactionService.createTransaction(productId, buyer.getId(), organizationId);
         return ResponseEntity.ok(tx);
     }
 

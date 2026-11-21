@@ -216,9 +216,9 @@ public class UserNeedService {
 	     return List.of();
 	 }
 	 
-}
+	}
 
-    public Map<String, Object> searchMatchingNeedsForProductQuery(AbstractUserNeed need) {
+	public Map<String, Object> searchMatchingNeedsForProductQuery(AbstractUserNeed need) {
         if (need == null) {
             return java.util.Map.of("strictlyMatchingNeeds", List.of(), "similarNeeds", List.of());
         }

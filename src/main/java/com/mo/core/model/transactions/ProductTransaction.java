@@ -9,6 +9,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import com.mo.auth.User;
 import com.mo.core.enums.TransactionStatus;
 import com.mo.core.model.products.AbstractProduct;
+import com.mo.core.model.organisations.Organisation;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -68,4 +70,8 @@ public class ProductTransaction {
     @Column(nullable = false)
     private boolean marketplace;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organisation_id")
+    @JsonProperty("organisation_id")
+    private Organisation organisation;
 }

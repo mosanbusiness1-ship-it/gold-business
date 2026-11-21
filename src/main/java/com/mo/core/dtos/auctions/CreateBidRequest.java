@@ -1,5 +1,7 @@
 package com.mo.core.dtos.auctions;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.math.BigDecimal;
 
 /**
@@ -22,6 +24,8 @@ import java.math.BigDecimal;
 public class CreateBidRequest {
     private Long productId;
     private Long bidderId;
+    @JsonProperty("organisation_id")
+    private Long organisationId;
     private BigDecimal amount;
 
     public Long getProductId() {
@@ -38,6 +42,14 @@ public class CreateBidRequest {
 
     public void setBidderId(Long bidderId) {
         this.bidderId = bidderId;
+    }
+
+    public Long getOrganisationId() {
+        return organisationId;
+    }
+
+    public void setOrganisationId(Long organisationId) {
+        this.organisationId = organisationId;
     }
 
     public BigDecimal getAmount() {

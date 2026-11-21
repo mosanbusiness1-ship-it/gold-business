@@ -243,7 +243,7 @@ public class AuctionController {
         }
 
         Long bidderId = request.getBidderId() != null ? request.getBidderId() : currentUser.getId();
-        Bid bid = bidService.placeBid(auctionId, request.getProductId(), bidderId, request.getAmount());
+        Bid bid = bidService.placeBid(auctionId, request.getProductId(), bidderId, request.getOrganisationId(), request.getAmount());
         auctionLiveUpdateService.broadcastAuctionSummary(auctionId);
         return ResponseEntity.ok(toBidResponse(bid));
     }
@@ -310,6 +310,7 @@ public class AuctionController {
         response.setAuctionId(bid.getAuction() != null ? bid.getAuction().getId() : null);
         response.setProductId(bid.getProduct() != null ? bid.getProduct().getId() : null);
         response.setBidderId(bid.getBidder() != null ? bid.getBidder().getId() : null);
+        response.setOrganisationId(bid.getOrganisation() != null ? bid.getOrganisation().getId() : null);
         response.setAmount(bid.getAmount());
         response.setStatus(bid.getStatus());
         response.setCreatedAt(bid.getCreatedAt());
@@ -375,16 +376,15 @@ public class AuctionController {
         return ResponseEntity.ok(summary);
     }
 
-    // 8️⃣ Récupérer les besoins correspondants à une enchère
-    @GetMapping("/{auctionId}/matching-needs")
-    @Operation(summary = "Get auction matching needs", description = "Return strict and similar needs matching the auction need")
-    public ResponseEntity<Map<String, Object>> getMatchingNeeds(@PathVariable Long auctionId) {
+    // 8️⃣ Récupérer les produits correspondants à une enchère
+    @GetMapping("/{auctionId}/matching-products")
+    @Operation(summary = "Get auction matching products", description = "Return products matching the auction's underlying need")
+    public ResponseEntity<List<Map<String, Object>>> getMatchingProducts(@PathVariable Long auctionId) {
         Auction auction = auctionService.findById(auctionId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Auction not found"));
         if (auction.getNeed() == null) {
-            return ResponseEntity.ok(Map.of("strictlyMatchingNeeds", List.of(), "similarNeeds", List.of()));
+            return ResponseEntity.ok(List.of());
         }
-        Map<String, Object> matches = needService.searchMatchingNeedsForProductQuery(auction.getNeed());
-        return ResponseEntity.ok(matches);
+        return ResponseEntity.ok(needService.searchMatchingProducts(auction.getNeed()));
     }
 }

@@ -17,6 +17,8 @@ import java.util.List;
 import com.mo.core.events.AuctionBidEvent;
 import com.mo.core.kafka.AuctionBidProducer;
 import com.mo.core.enums.OrganisationVisibility;
+import com.mo.core.model.organisations.Organisation;
+import com.mo.core.repositories.jpa.OrganisationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -29,6 +31,7 @@ public class BidService {
     private final UserRepository userRepository;
     private final AuctionBidProducer auctionBidProducer;
     private final OrganisationMembershipService organisationMembershipService;
+    private final OrganisationRepository organisationRepository;
 
     @Autowired
     public BidService(BidRepository bidRepository,
@@ -36,17 +39,19 @@ public class BidService {
                       ProductRepository productRepository,
                       UserRepository userRepository,
                       AuctionBidProducer auctionBidProducer,
-                      OrganisationMembershipService organisationMembershipService) {
+                      OrganisationMembershipService organisationMembershipService,
+                      OrganisationRepository organisationRepository) {
         this.bidRepository = bidRepository;
         this.auctionRepository = auctionRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.auctionBidProducer = auctionBidProducer;
         this.organisationMembershipService = organisationMembershipService;
+        this.organisationRepository = organisationRepository;
     }
 
     @Transactional
-    public Bid placeBid(Long auctionId, Long productId, Long bidderId, BigDecimal amount) {
+    public Bid placeBid(Long auctionId, Long productId, Long bidderId, Long organisationId, BigDecimal amount) {
         Auction auction = auctionRepository.findByIdWithProducts(auctionId)
                 .orElseThrow(() -> new IllegalArgumentException("Auction introuvable: " + auctionId));
 
@@ -63,6 +68,17 @@ public class BidService {
 
         enforceBidVisibilityRules(auction, bidder.getId());
 
+        Organisation organisation = null;
+        if (organisationId != null) {
+            organisation = organisationRepository.findById(organisationId)
+                    .orElseThrow(() -> new IllegalArgumentException("Organisation introuvable: " + organisationId));
+
+            if (auction.getNeed() == null || auction.getNeed().getOrganisations() == null ||
+                auction.getNeed().getOrganisations().stream().noneMatch(org -> org.getId().equals(organisationId))) {
+                throw new IllegalArgumentException("L'organisation ne participe pas à cette enchère");
+            }
+        }
+
         AbstractProduct product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Produit introuvable: " + productId));
 
@@ -78,6 +94,7 @@ public class BidService {
         bid.setAuction(auction);
         bid.setProduct(product);
         bid.setBidder(bidder);
+        bid.setOrganisation(organisation);
         bid.setAmount(amount);
 
         auction.getProducts().add(product);

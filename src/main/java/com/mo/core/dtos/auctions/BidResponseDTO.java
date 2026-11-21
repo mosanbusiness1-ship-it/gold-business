@@ -50,6 +50,9 @@ public class BidResponseDTO {
     @JsonProperty("bidder_id")
     private Long bidderId;
 
+    @JsonProperty("organisation_id")
+    private Long organisationId;
+
     private BigDecimal amount;
     private BidStatus status;
 
@@ -86,6 +89,14 @@ public class BidResponseDTO {
 
     public void setBidderId(Long bidderId) {
         this.bidderId = bidderId;
+    }
+
+    public Long getOrganisationId() {
+        return organisationId;
+    }
+
+    public void setOrganisationId(Long organisationId) {
+        this.organisationId = organisationId;
     }
 
     public BigDecimal getAmount() {

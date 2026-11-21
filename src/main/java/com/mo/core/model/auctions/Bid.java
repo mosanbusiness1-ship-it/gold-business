@@ -1,7 +1,9 @@
 package com.mo.core.model.auctions;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mo.auth.User;
+import com.mo.core.model.organisations.Organisation;
 import com.mo.core.model.products.AbstractProduct;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -40,6 +42,11 @@ public class Bid {
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "bidder_id", nullable = false)
     private User bidder;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organisation_id")
+    @JsonProperty("organisation_id")
+    private Organisation organisation;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;

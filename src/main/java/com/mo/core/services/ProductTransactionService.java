@@ -11,6 +11,8 @@ import com.mo.core.model.transactions.ProductTransaction;
 import com.mo.core.repositories.jpa.ProductRepository;
 import com.mo.core.repositories.jpa.ProductTransactionRepository;
 import com.mo.repositories.UserRepository;
+import com.mo.core.repositories.jpa.OrganisationRepository;
+import com.mo.core.model.organisations.Organisation;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,8 +23,9 @@ public class ProductTransactionService {
     private final ProductTransactionRepository transactionRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final OrganisationRepository organisationRepository;
 
-public ProductTransaction createTransaction(Long productId, Long buyerId) {
+public ProductTransaction createTransaction(Long productId, Long buyerId, Long organisationId) {
     AbstractProduct product = productRepository.findById(productId)
         .orElseThrow(() -> new IllegalArgumentException("Produit introuvable"));
 
@@ -39,10 +42,21 @@ public ProductTransaction createTransaction(Long productId, Long buyerId) {
         throw new IllegalArgumentException("Un utilisateur ne peut pas acheter son propre produit");
     }
 
+    Organisation organisation = null;
+    if (organisationId != null) {
+        organisation = organisationRepository.findById(organisationId)
+            .orElseThrow(() -> new IllegalArgumentException("Organisation introuvable"));
+
+        if (organisation.getProducts() == null || organisation.getProducts().stream().noneMatch(p -> p.getId().equals(productId))) {
+            throw new IllegalArgumentException("Le produit ne participe pas à cette organisation");
+        }
+    }
+
     ProductTransaction transaction = ProductTransaction.builder()
         .product(product)
         .buyer(buyer)
         .seller(seller)
+        .organisation(organisation) // Associer l'organisation à la transaction
         .amount(product.getPrice())
         .status(TransactionStatus.PENDING)
         .build();
