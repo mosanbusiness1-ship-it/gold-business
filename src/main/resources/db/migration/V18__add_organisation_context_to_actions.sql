@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS need_offers (
     created_at TIMESTAMP NOT NULL,
     CONSTRAINT fk_need_offer_need FOREIGN KEY (need_id) REFERENCES abstract_user_need(id),
     CONSTRAINT fk_need_offer_product FOREIGN KEY (product_id) REFERENCES abstract_product(id),
-    CONSTRAINT fk_need_offer_offerer FOREIGN KEY (offerer_id) REFERENCES "user"(id),
+    CONSTRAINT fk_need_offer_offerer FOREIGN KEY (offerer_id) REFERENCES users(id),
     CONSTRAINT fk_need_offer_organisation FOREIGN KEY (organisation_id) REFERENCES organisation(id)
 );
 
