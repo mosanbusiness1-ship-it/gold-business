@@ -1135,22 +1135,18 @@ public class OrganisationController {
         }
     }
     
+    @PostMapping("/{orgId}/needs/bulk")
     @PreAuthorize("@organisationSecurity.isOwnerOrAdmin(authentication, #orgId)")
     @Transactional
     public ResponseEntity<?> createNeedsForOrganisation(
             @PathVariable Long orgId,
-            @RequestBody @Valid BulkNeedsForOrganisationRequest request) {
+            @RequestBody @Valid BulkNeedsForOrganisationRequest request,
+            @AuthenticationPrincipal User currentUser) {
 
-        log.info("➡️ Creating {} needs for organisation {}", request.needs().size(), orgId);
+        log.info("➡️ Creating {} needs for organisation {} by user {}", request.needs().size(), orgId, currentUser.getId());
 
         Organisation organisation = organisationService.getOrganisationById(orgId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organisation not found"));
-
-        UserNeedVisitor<AbstractUserNeed> createVisitor =
-                visitorRegistry.getVisitorForNeedType("createUserNeedVisitor");
-        if (createVisitor == null) {
-            throw new IllegalArgumentException("No visitor found for createUserNeedVisitor");
-        }
 
         List<AbstractUserNeed> savedNeeds = new ArrayList<>();
 
@@ -1160,14 +1156,19 @@ public class OrganisationController {
                 continue;
             }
 
-            AbstractUserNeed savedNeed = userNeedService.createFromDto(dto);
-            savedNeeds.add(savedNeed);
+            if (dto.getUserId() != null && !dto.getUserId().equals(currentUser.getId())) {
+                throw new AccessDeniedException("The user_id in the payload does not match the authenticated user");
+            }
 
-            // bidirectional link
+            dto.setUserId(currentUser.getId());
+            AbstractUserNeed savedNeed = userNeedService.createFromDto(dto);
+            savedNeed.setUser(currentUser);
+            savedNeed = userNeedService.createNeed(savedNeed);
             organisation.addNeed(savedNeed);
+            savedNeeds.add(savedNeed);
         }
 
-        organisationService.save(organisation); // propriétaire => on persiste l’organisation
+        organisationService.save(organisation);
 
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("organisationId", orgId);

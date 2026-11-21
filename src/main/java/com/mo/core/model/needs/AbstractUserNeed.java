@@ -75,7 +75,7 @@ public abstract class AbstractUserNeed {
     
     @ToString.Include
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
     @ToString.Include
