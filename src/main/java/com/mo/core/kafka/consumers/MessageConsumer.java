@@ -87,7 +87,7 @@ public class MessageConsumer {
     private UserNeedIndexerVisitor indexerVisitor;
 	
 	
-	@KafkaListener(topics = "filteredSimilarMatches", groupId = "gb")
+	/*@KafkaListener(topics = "filteredSimilarMatches", groupId = "gb")
 	public void listenSimilarMatches(String payload, ConsumerRecord<String, String> record) {
 		//System.out.println("Recieved similar : "+payload);
 	    if (payload == null || payload.isBlank()) {
@@ -146,7 +146,7 @@ public class MessageConsumer {
 
    
 
-	@KafkaListener(topics = "strictMatches", groupId = "strictMatches-group")
+	/*@KafkaListener(topics = "strictMatches", groupId = "strictMatches-group")
 	public void listenStrictMatches(String payload) {
 		System.out.println("Recieved strict : "+payload);
 	    if (payload == null || payload.isBlank()) {
@@ -251,7 +251,7 @@ public class MessageConsumer {
 	    } catch (Exception e) {
 	        log.error("❌ Erreur inattendue dans le listener strictMatches", e);
 	    }
-	}
+	}*/
 
     
   

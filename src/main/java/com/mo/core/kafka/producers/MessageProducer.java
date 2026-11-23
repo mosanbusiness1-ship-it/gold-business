@@ -3,6 +3,7 @@ package com.mo.core.kafka.producers;
 import java.util.concurrent.CompletableFuture;
 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
@@ -28,8 +29,11 @@ public class MessageProducer {
         this.kafkaTemplate = kafkaTemplate;
     }
 
+    @Value("${app.kafka.enabled:false}")
+    private boolean kafkaEnabled;
+
     public <T> CompletableFuture<SendResult<String, String>> send(String topic, String payload) {
-        if (kafkaTemplate == null) {
+        if (kafkaTemplate == null || !kafkaEnabled) {
             log.warn("Kafka désactivé ou non configuré : impossible d’envoyer le message sur le topic {}", topic);
             return CompletableFuture.completedFuture(null);
         }

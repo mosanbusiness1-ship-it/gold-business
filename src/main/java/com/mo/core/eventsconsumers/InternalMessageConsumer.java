@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.stereotype.Component;
+import org.springframework.context.ApplicationEventPublisher;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,6 +24,7 @@ import com.mo.core.events.*;
 import com.mo.core.dtos.ProductAndMatchedNeedsDTO;
 import com.mo.core.dtos.autoPurchase.AutoPurchaseDTO;
 import com.mo.core.dtos.NotificationData;
+import com.mo.notification.events.NotificationEvent;
 import com.mo.core.kafka.consumers.MessageConsumer;
 import com.mo.core.kafka.producers.MessageProducer;
 import com.mo.core.model.auctions.Auction;
@@ -81,6 +83,9 @@ public class InternalMessageConsumer {
     
     private final String viewDetailsLink = "http://localhost:3000/gb/product";
 
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+
     @EventListener
     public void onFilteredSimilarMatch(FilteredSimilarMatchEvent event) {
         ProductAndMatchedNeedsDTO data = event.getData();
@@ -125,8 +130,9 @@ public class InternalMessageConsumer {
                 }
           
 
-                String message = objectMapper.writeValueAsString(notificationData);
-                messageProducer.send("nytify-user-for-similarMatches", message);
+                // String message = objectMapper.writeValueAsString(notificationData);
+                // messageProducer.send("nytify-user-for-similarMatches", message);
+                eventPublisher.publishEvent(new NotificationEvent(this, notificationData));
 
                 log.info("Notification sent to user {} for product {}", user.getId(), data.getProduct().getId());
             } catch (Exception ex) {
@@ -217,17 +223,8 @@ public class InternalMessageConsumer {
                     data.setEventTimestamp(Instant.now().toString());
                     data.setDetails("Strict match notification with auto-purchase option.");
 
-                messageProducer.send("notify-user-for-strictMatches", objectMapper.writeValueAsString(data))
-                        .whenComplete((result, ex) -> {
-                            if (ex != null) {
-                                log.error("❌ Erreur Kafka pour Notification : {}", data, ex);
-                            } else {
-                                log.info("✔ Notification envoyée : topic={}, partition={}, offset={}",
-                                        result.getRecordMetadata().topic(),
-                                        result.getRecordMetadata().partition(),
-                                        result.getRecordMetadata().offset());
-                            }
-                        });
+                // Remplacé par l'envoi d'un événement Spring
+                eventPublisher.publishEvent(new NotificationEvent(this, data));
 
             } catch (Exception e) {
                 log.error("❌ Erreur lors du traitement d’un besoin : {}", need, e);
@@ -324,8 +321,9 @@ public class InternalMessageConsumer {
             notificationData.setEventTimestamp(Instant.now().toString());
             notificationData.setDetails("Auction ended and winning product selected based on price/quality score.");
 
-	        String message = objectMapper.writeValueAsString(notificationData);
-	        messageProducer.send("notify-user-for-winningAuction", message);
+	        // String message = objectMapper.writeValueAsString(notificationData);
+	        // messageProducer.send("notify-user-for-winningAuction", message);
+	        eventPublisher.publishEvent(new NotificationEvent(this, notificationData));
 	        log.info("Notification sent to user {} for winning product {} in auction {}",
 	                user.getId(), winningProduct.getId(), auction.getId());
 

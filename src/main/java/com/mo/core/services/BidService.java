@@ -15,12 +15,12 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import com.mo.core.events.AuctionBidEvent;
-import com.mo.core.kafka.AuctionBidProducer;
 import com.mo.core.enums.OrganisationVisibility;
 import com.mo.core.model.organisations.Organisation;
 import com.mo.core.repositories.jpa.OrganisationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Service
 public class BidService {
@@ -29,25 +29,25 @@ public class BidService {
     private final AuctionRepository auctionRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
-    private final AuctionBidProducer auctionBidProducer;
     private final OrganisationMembershipService organisationMembershipService;
     private final OrganisationRepository organisationRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Autowired
     public BidService(BidRepository bidRepository,
                       AuctionRepository auctionRepository,
                       ProductRepository productRepository,
                       UserRepository userRepository,
-                      AuctionBidProducer auctionBidProducer,
                       OrganisationMembershipService organisationMembershipService,
-                      OrganisationRepository organisationRepository) {
+                      OrganisationRepository organisationRepository,
+                      ApplicationEventPublisher eventPublisher) {
         this.bidRepository = bidRepository;
         this.auctionRepository = auctionRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
-        this.auctionBidProducer = auctionBidProducer;
         this.organisationMembershipService = organisationMembershipService;
         this.organisationRepository = organisationRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -110,7 +110,9 @@ public class BidService {
         event.setAmount(amount);
         event.setEventType("auction_bid_updated");
         event.setOccurredAt(java.time.LocalDateTime.now());
-        auctionBidProducer.publishBidEvent(event);
+        eventPublisher.publishEvent(event);
+
+        // TODO: Publish to Kafka or other messaging system if needed
 
         return savedBid;
     }

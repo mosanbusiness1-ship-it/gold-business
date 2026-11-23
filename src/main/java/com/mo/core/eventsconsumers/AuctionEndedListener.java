@@ -17,8 +17,9 @@ import com.mo.core.visitors.product_visitors.ProductVisitor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 
 /**
  * Listener critique pour la fin des enchères
@@ -31,14 +32,14 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class AuctionEndedListener {
+public class AuctionEndedListener implements ApplicationEventPublisherAware {
 
     private final ProductVisitor<Double> qualityEvaluationVisitor;
     private final AuctionService auctionService;
     private final BidService bidService;
-    private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
     private final AuditLogService auditLogService;
+    private ApplicationEventPublisher eventPublisher;
 
     @EventListener
     public void handleAuctionEnded(AuctionEndedEvent event) {
@@ -86,13 +87,12 @@ public class AuctionEndedListener {
                             "Bid status update failed: " + e.getMessage());
                 }
 
-                // 4. Publier notification Kafka
+                // 4. Publier notification Spring
                 try {
                     NotificationData notification = prepareNotification(auction, winningProduct);
-                    String payload = objectMapper.writeValueAsString(notification);
-                    kafkaTemplate.send("notify-user-for-winningAuction", payload);
+                    eventPublisher.publishEvent(notification);
                     
-                    log.debug("[AUCTION_ENDED] Published winning auction notification for auction {}", auctionId);
+                    log.info("[AUCTION_ENDED] Published winning auction notification for auction {}", auctionId);
                 } catch (Exception e) {
                     log.error("[AUCTION_ENDED] ❌ Failed to publish auction winning notification", e);
                     auditLogService.markAsKafkaFailed(auditLogId, "notify-user-for-winningAuction", 
@@ -157,6 +157,11 @@ public class AuctionEndedListener {
         notification.setEventTimestamp(LocalDateTime.now().toString());
 
         return notification;
+    }
+
+    @Override
+    public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+        this.eventPublisher = applicationEventPublisher;
     }
 }
 

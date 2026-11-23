@@ -5,7 +5,7 @@ import com.mo.core.services.WebhookService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 /**
@@ -23,11 +23,7 @@ public class OrganisationValidationConsumer {
      * Consumer for validation pending events.
      * When a product is submitted, it's queued for moderation.
      */
-    @KafkaListener(
-        topics = "${kafka.topics.org-validation-pending:org-validation-pending}",
-        groupId = "${kafka.consumer.group-id:org-moderation-pending}",
-        containerFactory = "organisationValidationListenerContainerFactory"
-    )
+    @EventListener
     public void handleValidationPending(OrganisationProductValidationEvent event) {
         log.info("📥 Received PENDING validation event: orgId={}, productId={}", 
             event.getOrganisationId(), event.getProductId());
@@ -50,11 +46,7 @@ public class OrganisationValidationConsumer {
     /**
      * Consumer for validation approved events.
      */
-    @KafkaListener(
-        topics = "${kafka.topics.org-validation-approved:org-validation-approved}",
-        groupId = "${kafka.consumer.group-id:org-moderation-approved}",
-        containerFactory = "organisationValidationListenerContainerFactory"
-    )
+    @EventListener
     public void handleValidationApproved(OrganisationProductValidationEvent event) {
         log.info("📥 Received APPROVED validation event: orgId={}, productId={}, moderatorId={}", 
             event.getOrganisationId(), event.getProductId(), event.getModeratorId());
@@ -81,11 +73,7 @@ public class OrganisationValidationConsumer {
     /**
      * Consumer for validation rejected events.
      */
-    @KafkaListener(
-        topics = "${kafka.topics.org-validation-rejected:org-validation-rejected}",
-        groupId = "${kafka.consumer.group-id:org-moderation-rejected}",
-        containerFactory = "organisationValidationListenerContainerFactory"
-    )
+    @EventListener
     public void handleValidationRejected(OrganisationProductValidationEvent event) {
         log.info("📥 Received REJECTED validation event: orgId={}, productId={}, reason={}", 
             event.getOrganisationId(), event.getProductId(), event.getComments());

@@ -27,7 +27,7 @@ COPY src/main/resources/aiven-truststore.jks /app/aiven-truststore.jks
 
 ARG AUTO_UPDATE_DATABASE=true
 ENV AUTO_UPDATE_DATABASE=${AUTO_UPDATE_DATABASE}
-ENV APP_KAFKA_ENABLED=true
+ENV APP_KAFKA_ENABLED=false
 EXPOSE 8080
 
 # Safe default: no schema mutation unless explicitly enabled in Docker/Render.
