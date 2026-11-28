@@ -8,8 +8,8 @@ import com.mo.core.model.products.AbstractProduct;
 import com.mo.core.services.OrganisationService;
 import com.mo.core.services.UserNeedService;
 import com.mo.core.services.NeedOfferService;
-import com.mo.core.model.needs.NeedOffer;
 import com.mo.core.dtos.CreateNeedOfferRequest;
+import com.mo.core.dtos.NeedOfferResponse;
 import com.mo.mappers.needMappers.NeedMapperJackson;
 import com.mo.auth.User;
 
@@ -194,10 +194,10 @@ public class UserNeedController {
 
     @PostMapping("/{needId}/offers")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<NeedOffer> createOffer(@PathVariable Long needId,
+    public ResponseEntity<NeedOfferResponse> createOffer(@PathVariable Long needId,
                                                  @RequestBody @Valid CreateNeedOfferRequest request,
                                                  @AuthenticationPrincipal User currentUser) {
-        NeedOffer offer = needOfferService.createOffer(
+        NeedOfferResponse offer = needOfferService.createOffer(
                 needId,
                 request.productId(),
                 request.organisationId(),
@@ -208,7 +208,7 @@ public class UserNeedController {
 
     @GetMapping("/{needId}/offers")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<List<NeedOffer>> getOffers(@PathVariable Long needId) {
+    public ResponseEntity<List<NeedOfferResponse>> getOffers(@PathVariable Long needId) {
         return ResponseEntity.ok(needOfferService.getOffersForNeed(needId));
     }
 

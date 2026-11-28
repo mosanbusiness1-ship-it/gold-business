@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mo.auth.User;
+import com.mo.core.dtos.NeedOfferResponse;
 import com.mo.core.model.needs.AbstractUserNeed;
 import com.mo.core.model.needs.NeedOffer;
 import com.mo.core.model.organisations.Organisation;
@@ -27,7 +28,7 @@ public class NeedOfferService {
     private final OrganisationRepository organisationRepository;
 
     @Transactional
-    public NeedOffer createOffer(Long needId, Long productId, Long organisationId, User offerer, String message) {
+    public NeedOfferResponse createOffer(Long needId, Long productId, Long organisationId, User offerer, String message) {
         AbstractUserNeed need = userNeedRepository.findById(needId)
                 .orElseThrow(() -> new IllegalArgumentException("Need introuvable: " + needId));
 
@@ -55,10 +56,13 @@ public class NeedOfferService {
                 .message(message)
                 .build();
 
-        return needOfferRepository.save(offer);
+        return NeedOfferResponse.from(needOfferRepository.save(offer));
     }
 
-    public List<NeedOffer> getOffersForNeed(Long needId) {
-        return needOfferRepository.findByNeedId(needId);
+    @Transactional(readOnly = true)
+    public List<NeedOfferResponse> getOffersForNeed(Long needId) {
+        return needOfferRepository.findByNeedId(needId).stream()
+                .map(NeedOfferResponse::from)
+                .toList();
     }
 }
